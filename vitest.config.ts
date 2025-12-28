@@ -6,7 +6,7 @@ export default defineConfig({
 			enabled: true,
 			instances: [
 				{
-					browser: "1",
+					browser: "chromium",
 				} as any
 			]
 		},

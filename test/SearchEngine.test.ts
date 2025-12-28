@@ -1,7 +1,7 @@
 // noinspection TypeScriptUnresolvedReference
 
 import {afterAll, beforeEach, describe, expect, it} from 'vitest';
-import {SearchEngine, IStorage} from '../src';
+import {SearchEngine} from '../src';
 
 function getTestBaseDir() {
 	let workerId = '0';
@@ -11,49 +11,7 @@ function getTestBaseDir() {
 	return `core_test_data_${workerId}`;
 }
 
-// 简单的内存存储实现，用于测试 IStorage 外部化
-class MockStorage implements IStorage {
-	files = new Map<string, ArrayBuffer>();
 
-	async write(filename: string, data: ArrayBuffer): Promise<void> {
-		this.files.set(filename, data);
-	}
-
-	async append(filename: string, data: ArrayBuffer): Promise<void> {
-		const old = this.files.get(filename) || new ArrayBuffer(0);
-		const combined = new Uint8Array(old.byteLength + data.byteLength);
-		combined.set(new Uint8Array(old), 0);
-		combined.set(new Uint8Array(data), old.byteLength);
-		this.files.set(filename, combined.buffer);
-	}
-
-	async read(filename: string): Promise<ArrayBuffer | null> {
-		const d = this.files.get(filename);
-		return d ? d.slice(0) : null;
-	}
-
-	async readRange(filename: string, start: number, end: number): Promise<ArrayBuffer | null> {
-		const d = this.files.get(filename);
-		if (!d) return null;
-		return d.slice(start, end);
-	}
-
-	async remove(filename: string): Promise<void> {
-		this.files.delete(filename);
-	}
-
-	async listFiles(): Promise<string[]> {
-		return Array.from(this.files.keys());
-	}
-
-	async clearAll(): Promise<void> {
-		this.files.clear();
-	}
-
-	async getFileSize(filename: string): Promise<number> {
-		return this.files.get(filename)?.byteLength || 0;
-	}
-}
 
 describe('SearchEngine', () => {
 	let engine: SearchEngine;
@@ -69,19 +27,22 @@ describe('SearchEngine', () => {
 	afterAll(async () => {
 		const base = getTestBaseDir();
 		const dirsToClean = [base, base + '_node', base + '_custom'];
-		try{
-			const fs = await import('node:fs');
-			dirsToClean.forEach(d => {
-				if (fs.existsSync(d)) {
-					try {
-						fs.rmSync(d, {recursive: true, force: true});
-					} catch (e) {
-						console.error(`Failed to cleanup test dir ${d}:`, e);
+		// 仅在 Node.js 环境中执行清理
+		if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+			try{
+				const fs = await import('node:fs');
+				dirsToClean.forEach(d => {
+					if (fs.existsSync(d)) {
+						try {
+							fs.rmSync(d, {recursive: true, force: true});
+						} catch (e) {
+							console.error(`Failed to cleanup test dir ${d}:`, e);
+						}
 					}
-				}
-			});
-		} catch (e:any) {
-
+				});
+			} catch (e:any) {
+				// Ignore errors in non-Node environments
+			}
 		}
 	});
 

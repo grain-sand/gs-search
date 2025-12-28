@@ -258,7 +258,7 @@ export class SearchEngine {
         } else {
             const existingTokenCount = lastSegInfo.tokenCount;
             // 检查之前的 Segment 是否已经满了，或者加上新增的会超过阈值
-            if (existingTokenCount >= segThreshold || (existingTokenCount + addedTokenCount) > segThreshold) {
+            if (existingTokenCount >= segThreshold || (existingTokenCount + addedTokenCount) >= segThreshold) {
                 // Case 2: 上一个满了，或者加上新增的会超过阈值，开启新的
                 targetSegmentName = `${type}_seg_${Date.now()}.bin`;
                 isNew = true;
