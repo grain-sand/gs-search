@@ -138,4 +138,22 @@ describe('CoreSearchEngine', () => {
 		const res2 = await engine.search("limit", 2);
 		expect(res2.length).toBe(2);
 	});
+
+	it('已删除的文档ID不能重新添加', async () => {
+		// 添加文档
+		await engine.addDocument({id: 100, text: "test document"});
+		let res = await engine.search("test");
+		expect(res.length).toBe(1);
+		expect(res[0].id).toBe(100);
+
+		// 删除文档
+		await engine.removeDocument(100);
+		res = await engine.search("test");
+		expect(res.length).toBe(0);
+
+		// 尝试重新添加，应该抛出异常
+		await expect(engine.addDocument({id: 100, text: "re-added document"})).rejects.toThrow(
+			"Document ID 100 has been deleted and cannot be re-added."
+		);
+	});
 });

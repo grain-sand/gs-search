@@ -53,8 +53,9 @@ export class CoreSearchEngine {
 
         // Case 4: 自动检测 (当未配置 storage 时)
         if (!storageImpl) {
-            // 【升级】使用更严格的检测方式，确保 navigator.storage.getDirectory 存在
+            // noinspection SuspiciousTypeOfGuard
             const isBrowser = typeof navigator !== 'undefined' && navigator?.storage?.getDirectory instanceof Function;
+            // noinspection TypeScriptUnresolvedReference
             const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
             if (isBrowser) {
@@ -159,11 +160,16 @@ export class CoreSearchEngine {
         if (!this.#initialized) await this.init();
         if (docs.length === 0) return;
 
+        const deletedIds = this.#meta.getDeletedIds();
         const batchWordDocs: ITokenizedDoc[] = [];
         const batchCharDocs: ITokenizedDoc[] = [];
 
         // 1. 分词与分类
         for (const doc of docs) {
+            // 检查文档ID是否已被删除
+            if (deletedIds.has(doc.id)) {
+                throw new Error(`Document ID ${doc.id} has been deleted and cannot be re-added.`);
+            }
             const rawTokens = this.#getIndexingTokens(doc.text);
             const wordTokens: string[] = [];
             const charTokens: string[] = [];
@@ -290,7 +296,7 @@ export class CoreSearchEngine {
 
         // 预加载所有需要的索引段
         const segmentsToLoad = new Map<string, IndexSegment>();
-        
+
         // 收集所有需要的索引段
         const collectSegments = (type: IndexType) => {
             const segmentsMeta = this.#meta.getSegments(type);
