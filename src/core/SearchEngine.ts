@@ -257,9 +257,9 @@ export class SearchEngine {
             newTokenCountTotal = addedTokenCount;
         } else {
             const existingTokenCount = lastSegInfo.tokenCount;
-            // 检查之前的 Segment 是否已经满了
-            if (existingTokenCount >= segThreshold) {
-                // Case 2: 上一个满了，开启新的
+            // 检查之前的 Segment 是否已经满了，或者加上新增的会超过阈值
+            if (existingTokenCount >= segThreshold || (existingTokenCount + addedTokenCount) > segThreshold) {
+                // Case 2: 上一个满了，或者加上新增的会超过阈值，开启新的
                 targetSegmentName = `${type}_seg_${Date.now()}.bin`;
                 isNew = true;
                 startOffset = lastSegInfo.end; // 新的起始位置是上一个的结束位置

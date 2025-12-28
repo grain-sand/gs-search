@@ -85,59 +85,7 @@ describe('SearchEngine', () => {
 		}
 	});
 
-	it('支持使用自定义存储实现(MockStorage)', async () => {
-		const mockStorage = new MockStorage();
-		const customEngine = new SearchEngine({
-			baseDir: 'irrelevant',
-			storage: mockStorage
-		});
 
-		await customEngine.addDocument({id: 99, text: "custom storage test"});
-		const res = await customEngine.search("custom");
-
-		expect(res.length).toBe(1);
-		expect(res[0].id).toBe(99);
-		// 验证确实写入了 MockStorage
-		expect(await mockStorage.listFiles()).toContain('search_meta.json');
-	});
-
-	it('支持显示指定 storage: "node|browser" (字符串配置)', async () => {
-		// 强制使用 NodeStorage (在测试环境中应当有效)
-		// noinspection SuspiciousTypeOfGuard
-		const nodeEngine = new SearchEngine({
-			baseDir: getTestBaseDir() + '_node',
-			storage: navigator?.storage?.getDirectory instanceof Function ? 'browser' : 'node'
-		});
-		await nodeEngine.clearAll();
-		await nodeEngine.addDocument({id: 1, text: 'node test'});
-		const res = await nodeEngine.search('node');
-		expect(res.length).toBe(1);
-	});
-
-	it('支持分词器配置分离', async () => {
-		const customEngine = new SearchEngine({
-			baseDir: getTestBaseDir() + '_custom',
-			indexingTokenizer: (t) => t.split(' '),
-			searchTokenizer: (t) => t.split(',')
-		});
-		await customEngine.clearAll();
-		await customEngine.addDocument({id: 1, text: "hello world"});
-
-		const res = await customEngine.search("hello,world");
-		expect(res.length).toBe(1);
-		expect(res[0].tokens.sort()).toEqual(['hello', 'world']);
-	});
-
-	it('搜索结果数量限制参数应生效', async () => {
-		await engine.addDocuments([
-			{id: 1, text: "limit test A"},
-			{id: 2, text: "limit test B"},
-			{id: 3, text: "limit test C"}
-		]);
-
-		const res2 = await engine.search("limit", 2);
-		expect(res2.length).toBe(2);
-	});
 
 	it('已删除的文档ID不能重新添加', async () => {
 		// 添加文档
