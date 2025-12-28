@@ -87,10 +87,13 @@ export class SearchEngine {
             ...this.#meta.getSegments('char')
         ];
 
+        // 预加载所有相关的索引段并加载数据
         for (const seg of allSegments) {
             if (!this.#segments.has(seg.filename)) {
                 this.#segments.set(seg.filename, new IndexSegment(seg.filename, this.#storage));
             }
+            // 确保索引段已加载数据
+            await this.#segments.get(seg.filename)!.loadIndex();
         }
         this.#initialized = true;
     }
@@ -170,6 +173,10 @@ export class SearchEngine {
             if (deletedIds.has(doc.id)) {
                 throw new Error(`Document ID ${doc.id} has been deleted and cannot be re-added.`);
             }
+            // 检查文档ID是否已存在
+            if (this.#meta.isAdded(doc.id)) {
+                throw new Error(`Document ID ${doc.id} already exists.`);
+            }
             const rawTokens = this.#getIndexingTokens(doc.text);
             const wordTokens: string[] = [];
             const charTokens: string[] = [];
@@ -198,6 +205,11 @@ export class SearchEngine {
         if (batchCharDocs.length > 0) {
             await this.#cache.appendBatch(CHAR_CACHE_FILE, batchCharDocs);
             for (const d of batchCharDocs) addedCharTokens += d.tokens.length;
+        }
+
+        // 更新已添加ID集合
+        for (const doc of docs) {
+            this.#meta.addAddedId(doc.id);
         }
 
         // 3. 处理逻辑分支
@@ -373,6 +385,7 @@ export class SearchEngine {
     async removeDocument(id: number): Promise<void> {
         if (!this.#initialized) await this.init();
         this.#meta.addDeletedId(id);
+        this.#meta.removeAddedId(id);
         await this.#meta.save();
     }
 

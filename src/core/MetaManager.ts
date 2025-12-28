@@ -2,6 +2,7 @@ import { IIndexMeta, IndexType, ISegmentMeta, IStorage } from './Types';
 
 const META_FILE = 'search_meta.json';
 const DELETED_IDS_FILE = 'deleted_ids.bin';
+const ADDED_IDS_FILE = 'added_ids.bin';
 const SEPARATOR = 0x1E;
 
 export class MetaManager {
@@ -11,6 +12,7 @@ export class MetaManager {
         charSegments: []
     };
     #deletedIds: Set<number> = new Set();
+    #addedIds: Set<number> = new Set();
 
     constructor(storage: IStorage) {
         this.#storage = storage;
@@ -44,6 +46,25 @@ export class MetaManager {
                 }
             }
         }
+
+        // 加载已添加ID
+        const addedBuffer = await this.#storage.read(ADDED_IDS_FILE);
+        if (addedBuffer) {
+            const view = new DataView(addedBuffer);
+            let offset = 0;
+            const max = addedBuffer.byteLength;
+
+            while (offset < max) {
+                if (offset + 4 > max) break;
+                const id = view.getUint32(offset, true);
+                this.#addedIds.add(id);
+                offset += 4;
+
+                if (offset < max && view.getUint8(offset) === SEPARATOR) {
+                    offset += 1;
+                }
+            }
+        }
     }
 
     async save(): Promise<void> {
@@ -54,22 +75,40 @@ export class MetaManager {
         // 保存已删除ID
         if (this.#deletedIds.size === 0) {
             await this.#storage.remove(DELETED_IDS_FILE);
-            return;
+        } else {
+            const totalSize = this.#deletedIds.size * 4 + this.#deletedIds.size; // 4字节ID + 1字节分隔符
+            const buffer = new ArrayBuffer(totalSize);
+            const view = new DataView(buffer);
+            let offset = 0;
+
+            for (const id of this.#deletedIds) {
+                view.setUint32(offset, id, true);
+                offset += 4;
+                view.setUint8(offset, SEPARATOR);
+                offset += 1;
+            }
+
+            await this.#storage.write(DELETED_IDS_FILE, buffer);
         }
 
-        const totalSize = this.#deletedIds.size * 4 + this.#deletedIds.size; // 4字节ID + 1字节分隔符
-        const buffer = new ArrayBuffer(totalSize);
-        const view = new DataView(buffer);
-        let offset = 0;
+        // 保存已添加ID
+        if (this.#addedIds.size === 0) {
+            await this.#storage.remove(ADDED_IDS_FILE);
+        } else {
+            const totalSize = this.#addedIds.size * 4 + this.#addedIds.size; // 4字节ID + 1字节分隔符
+            const buffer = new ArrayBuffer(totalSize);
+            const view = new DataView(buffer);
+            let offset = 0;
 
-        for (const id of this.#deletedIds) {
-            view.setUint32(offset, id, true);
-            offset += 4;
-            view.setUint8(offset, SEPARATOR);
-            offset += 1;
+            for (const id of this.#addedIds) {
+                view.setUint32(offset, id, true);
+                offset += 4;
+                view.setUint8(offset, SEPARATOR);
+                offset += 1;
+            }
+
+            await this.#storage.write(ADDED_IDS_FILE, buffer);
         }
-
-        await this.#storage.write(DELETED_IDS_FILE, buffer);
     }
 
     getSegments(type: IndexType): ISegmentMeta[] {
@@ -80,8 +119,28 @@ export class MetaManager {
         return this.#deletedIds;
     }
 
-    addDeletedId(id: number) {
+    addDeletedId(id: number): void {
         this.#deletedIds.add(id);
+    }
+
+    isDeleted(id: number): boolean {
+        return this.#deletedIds.has(id);
+    }
+
+    addAddedId(id: number): void {
+        this.#addedIds.add(id);
+    }
+
+    removeAddedId(id: number): void {
+        this.#addedIds.delete(id);
+    }
+
+    isAdded(id: number): boolean {
+        return this.#addedIds.has(id);
+    }
+
+    getAddedIds(): ReadonlySet<number> {
+        return this.#addedIds;
     }
 
     getLastSegmentInfo(type: IndexType) {
@@ -106,5 +165,6 @@ export class MetaManager {
     reset() {
         this.#meta = { wordSegments: [], charSegments: [] };
         this.#deletedIds.clear();
+        this.#addedIds.clear();
     }
 }
