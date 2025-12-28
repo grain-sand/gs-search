@@ -23,7 +23,6 @@ export interface ISegmentMeta {
 export interface IIndexMeta {
     wordSegments: ISegmentMeta[];
     charSegments: ISegmentMeta[];
-    deletednumbers: number[];
 }
 
 export interface ITokenizedDoc {
