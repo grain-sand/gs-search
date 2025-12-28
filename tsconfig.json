@@ -1,0 +1,31 @@
+{
+  "include": [
+	"src/**/*.ts"
+  ],
+  "exclude": [
+	"node_modules",
+	"dist",
+	"test"
+  ],
+  "compilerOptions": {
+	"baseUrl": ".",
+	"declaration": false,
+	"esModuleInterop": true,
+	"experimentalDecorators": true,
+	"preserveConstEnums": true,
+	"module": "ESNext",
+	"moduleResolution": "bundler",
+	"outDir": "./dist/lib",
+	"sourceMap": false,
+	"strict": true,
+	"target": "ES2022",
+	"lib": [
+	  "ES2022",
+	  "DOM"
+	],
+	"allowJs": true,
+	"allowSyntheticDefaultImports": true,
+	"skipLibCheck": true,
+	"forceConsistentCasingInFileNames": true
+  }
+}

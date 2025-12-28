@@ -1,0 +1,28 @@
+{
+  "name": "gs-search",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.cjs",
+  "module": "lib/index.js",
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs",
+      "types": "./lib/index.d.ts"
+    }
+  },
+  "types": "lib/index.d.ts",
+  "keywords": [
+  ],
+  "homepage": "https://github.com/grain-sand/gs-search",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grain-sand/gs-search.git"
+  },
+  "bugs": {
+    "url": "https://github.com/grain-sand/gs-search/issues"
+  },
+  "author": "grain-sand",
+  "license": "MIT",
+  "dependencies": {}
+}
