@@ -1,7 +1,7 @@
 // noinspection TypeScriptUnresolvedReference
 
 import {afterAll, beforeEach, describe, expect, it} from 'vitest';
-import {CoreSearchEngine, IStorage} from '../src';
+import {SearchEngine, IStorage} from '../src';
 
 function getTestBaseDir() {
 	let workerId = '0';
@@ -55,11 +55,11 @@ class MockStorage implements IStorage {
 	}
 }
 
-describe('CoreSearchEngine', () => {
-	let engine: CoreSearchEngine;
+describe('SearchEngine', () => {
+	let engine: SearchEngine;
 
 	beforeEach(async () => {
-		engine = new CoreSearchEngine({
+		engine = new SearchEngine({
 			baseDir: getTestBaseDir(),
 			wordSegmentTokenThreshold: 50
 		});
@@ -87,7 +87,7 @@ describe('CoreSearchEngine', () => {
 
 	it('支持使用自定义存储实现(MockStorage)', async () => {
 		const mockStorage = new MockStorage();
-		const customEngine = new CoreSearchEngine({
+		const customEngine = new SearchEngine({
 			baseDir: 'irrelevant',
 			storage: mockStorage
 		});
@@ -104,7 +104,7 @@ describe('CoreSearchEngine', () => {
 	it('支持显示指定 storage: "node|browser" (字符串配置)', async () => {
 		// 强制使用 NodeStorage (在测试环境中应当有效)
 		// noinspection SuspiciousTypeOfGuard
-		const nodeEngine = new CoreSearchEngine({
+		const nodeEngine = new SearchEngine({
 			baseDir: getTestBaseDir() + '_node',
 			storage: navigator?.storage?.getDirectory instanceof Function ? 'browser' : 'node'
 		});
@@ -115,7 +115,7 @@ describe('CoreSearchEngine', () => {
 	});
 
 	it('支持分词器配置分离', async () => {
-		const customEngine = new CoreSearchEngine({
+		const customEngine = new SearchEngine({
 			baseDir: getTestBaseDir() + '_custom',
 			indexingTokenizer: (t) => t.split(' '),
 			searchTokenizer: (t) => t.split(',')

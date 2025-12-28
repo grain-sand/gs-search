@@ -19,10 +19,10 @@ describe('SimpleSearch (Facade)', () => {
 		}
 	});
 
-	it('应支持事务操作', async () => {
-		await SimpleSearch.startTransaction();
+	it('should support batch operations', async () => {
+		await SimpleSearch.startBatch();
 		await SimpleSearch.addDocument({id: 1, text: "batch test"});
-		await SimpleSearch.commitTransaction();
+		await SimpleSearch.endBatch();
 
 		const res = await SimpleSearch.search("batch");
 		expect(res.length).toBe(1);

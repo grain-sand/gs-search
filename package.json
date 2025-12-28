@@ -1,29 +1,29 @@
 {
-	"name": "gs-search-dev",
-	"private": true,
-	"scripts": {
-		"test": "vitest run --browser.enabled=false",
-		"test:browser": "vitest run --browser.enabled=true",
-		"build": "rollup -c --compact",
-		"dev": "tsx src/index.ts"
-	},
-	"devDependencies": {
-		"@rollup/plugin-alias": "^5.1.1",
-		"@rollup/plugin-node-resolve": "^16.0.1",
-		"@rollup/plugin-terser": "^0.4.4",
-		"@tsconfig/node20": "^20.1.6",
-		"@types/minimatch": "^6.0.0",
-		"@types/node": "^24.3.3",
-		"@vitest/browser": "^3.2.4",
-		"esbuild": "0.25.9",
-		"rollup": "^4.50.1",
-		"rollup-plugin-copy": "^3.5.0",
-		"rollup-plugin-dts": "^6.2.3",
-		"rollup-plugin-esbuild": "^6.2.1",
-		"rollup-plugin-typescript2": "^0.36.0",
-		"tsx": "^4.21.0",
-		"typescript": "^5.9.2",
-		"vitest": "^3.2.4"
-	},
-	"type": "module"
+  "name": "gs-search",
+  "private": true,
+  "scripts": {
+	"test": "vitest run --browser.enabled=false",
+	"test:browser": "vitest run --browser.enabled=true",
+	"build": "rollup -c --compact",
+	"dev": "tsx src/index.ts"
+  },
+  "devDependencies": {
+	"@rollup/plugin-alias": "^5.1.1",
+	"@rollup/plugin-node-resolve": "^16.0.1",
+	"@rollup/plugin-terser": "^0.4.4",
+	"@tsconfig/node20": "^20.1.6",
+	"@types/minimatch": "^6.0.0",
+	"@types/node": "^24.3.3",
+	"@vitest/browser": "^3.2.4",
+	"esbuild": "0.25.9",
+	"rollup": "^4.50.1",
+	"rollup-plugin-copy": "^3.5.0",
+	"rollup-plugin-dts": "^6.2.3",
+	"rollup-plugin-esbuild": "^6.2.1",
+	"rollup-plugin-typescript2": "^0.36.0",
+	"tsx": "^4.21.0",
+	"typescript": "^5.9.2",
+	"vitest": "^3.2.4"
+  },
+  "type": "module"
 }

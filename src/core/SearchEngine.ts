@@ -10,7 +10,7 @@ const CHAR_CACHE_FILE = 'char_cache.bin';
 /**
  * 核心搜索引擎类 (多实例支持)
  */
-export class CoreSearchEngine {
+export class SearchEngine {
     #storage: IStorage;
     #meta: MetaManager;
     #cache: IntermediateCache;
@@ -19,12 +19,12 @@ export class CoreSearchEngine {
     #config: ISearchEngineConfig;
 
     // 批处理状态
-    #inTransaction: boolean = false;
+    #inBatch: boolean = false;
     #pendingTokenCounts: { word: number, char: number } = { word: 0, char: 0 };
 
     constructor(config: ISearchEngineConfig) {
         if (!config.baseDir) {
-            throw new Error("CoreSearchEngine requires 'baseDir' in config.");
+            throw new Error("SearchEngine requires 'baseDir' in config.");
         }
         this.#config = {
             wordSegmentTokenThreshold: 100000,
@@ -96,21 +96,21 @@ export class CoreSearchEngine {
     }
 
     /**
-     * 开启批处理事务
-     * 事务期间 addDocuments 只写入缓存，不触发索引段构建
+     * 开启批处理
+     * 批处理期间 addDocuments 只写入缓存，不触发索引段构建
      */
-    startTransaction() {
-        this.#inTransaction = true;
+    startBatch() {
+        this.#inBatch = true;
         this.#pendingTokenCounts = { word: 0, char: 0 };
     }
 
     /**
-     * 提交事务
+     * 结束批处理
      * 触发索引构建检查并保存元数据
      */
-    async commitTransaction() {
-        this.#inTransaction = false;
-
+    async endBatch() {
+        this.#inBatch = false;
+        
         // 检查是否有挂起的数据需要处理
         if (this.#pendingTokenCounts.word > 0) {
             await this.#processSegmentLogic('word', this.#pendingTokenCounts.word);
@@ -201,8 +201,8 @@ export class CoreSearchEngine {
         }
 
         // 3. 处理逻辑分支
-        if (this.#inTransaction) {
-            // 事务模式：累加计数，暂不处理 Segment
+        if (this.#inBatch) {
+            // 批处理模式：累加计数，暂不处理 Segment
             this.#pendingTokenCounts.word += addedWordTokens;
             this.#pendingTokenCounts.char += addedCharTokens;
         } else {
@@ -381,7 +381,7 @@ export class CoreSearchEngine {
         this.#segments.clear();
         this.#meta.reset();
         this.#initialized = false;
-        this.#inTransaction = false;
+        this.#inBatch = false;
         this.#pendingTokenCounts = { word: 0, char: 0 };
     }
 
@@ -393,7 +393,7 @@ export class CoreSearchEngine {
             deleted: this.#meta.getDeletedIds().size,
             wordCacheSize: await this.#cache.getCurrentSize(WORD_CACHE_FILE),
             charCacheSize: await this.#cache.getCurrentSize(CHAR_CACHE_FILE),
-            inTransaction: this.#inTransaction
+            inBatch: this.#inBatch
         };
     }
 }

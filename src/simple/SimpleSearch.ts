@@ -1,4 +1,4 @@
-import {CoreSearchEngine} from '../core/CoreSearchEngine';
+import {SearchEngine} from '../core/SearchEngine';
 import {IDocument, ISearchEngineConfig} from '../core/Types';
 
 /**
@@ -6,7 +6,7 @@ import {IDocument, ISearchEngineConfig} from '../core/Types';
  * 提供单例模式和默认配置
  */
 export class SimpleSearch {
-    static #instance: CoreSearchEngine | null = null;
+    static #instance: SearchEngine | null = null;
 
     // 默认配置
     static #defaultConfig: ISearchEngineConfig = {
@@ -23,22 +23,22 @@ export class SimpleSearch {
             ...this.#defaultConfig,
             ...config
         };
-        this.#instance = new CoreSearchEngine(finalConfig);
+        this.#instance = new SearchEngine(finalConfig);
     }
 
-    static #getInstance() {
+    static #getInstance():SearchEngine {
         if (!this.#instance) {
-            this.#instance = new CoreSearchEngine(this.#defaultConfig);
+            this.#instance = new SearchEngine(this.#defaultConfig);
         }
-        return this.#instance;
+        return this.#instance!;
     }
 
-    static async startTransaction() {
-        this.#getInstance().startTransaction();
+    static async startBatch() {
+        this.#getInstance().startBatch();
     }
 
-    static async commitTransaction() {
-        return this.#getInstance().commitTransaction();
+    static async endBatch() {
+        return this.#getInstance().endBatch();
     }
 
     static async addDocument(doc: IDocument) {
