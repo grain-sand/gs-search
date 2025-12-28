@@ -57,10 +57,9 @@ describe('Segment Threshold Configuration', () => {
 
 		// 跟踪分词器调用次数和返回的token
 		let tokenizerCalls = 0;
-		const customTokenizer = () => {
-			// 模拟不同长度的token列表
+		const customTokenizer = (_text: string) => {
 			tokenizerCalls++;
-			// 第一个文档返回3个token，第二个文档返回7个token（明显超过阈值5）
+			// 第一个文档返回3个token，第二个文档返回7个token（累计10个，超过阈值5）
 			return tokenizerCalls === 1 ? ['a', 'b', 'c'] : ['e', 'f', 'g', 'h', 'i', 'j', 'k'];
 		};
 
@@ -72,8 +71,8 @@ describe('Segment Threshold Configuration', () => {
 			indexingTokenizer: customTokenizer
 		});
 
-		// 添加第一个文档 (4个token)
-		await engine.addDocument({ id: 1, text: 'abcd' });
+		// 添加第一个文档 (3个token)
+		await engine.addDocument({ id: 1, text: 'abc' });
 
 		// 检查当前字符段文件数量
 		let files = await mockStorage.listFiles();
@@ -81,8 +80,8 @@ describe('Segment Threshold Configuration', () => {
 		const firstSegmentCount = charSegFiles.length;
 		expect(firstSegmentCount).toBe(1); // 应该有1个字符段文件
 
-		// 添加第二个文档 (6个token)
-		await engine.addDocument({ id: 2, text: 'efghij' });
+		// 添加第二个文档 (7个token，累计10个，超过阈值5)
+		await engine.addDocument({ id: 2, text: 'efghijk' });
 
 		// 检查新增了字符段文件
 		files = await mockStorage.listFiles();

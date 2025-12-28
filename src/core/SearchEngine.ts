@@ -34,6 +34,14 @@ export class SearchEngine {
             ...config
         };
 
+        // 验证配置关系
+        if ((this.#config.minWordTokenSave || 0) >= (this.#config.wordSegmentTokenThreshold || 100000)) {
+            throw new Error("minWordTokenSave must be less than wordSegmentTokenThreshold");
+        }
+        if ((this.#config.minCharTokenSave || 0) >= (this.#config.charSegmentTokenThreshold || 500000)) {
+            throw new Error("minCharTokenSave must be less than charSegmentTokenThreshold");
+        }
+
         // 【升级】存储层配置逻辑
         // 优先级：配置对象(IStorage) > 配置字符串('browser'|'node') > 自动环境检测
         let storageImpl: IStorage | null = null;
@@ -248,10 +256,17 @@ export class SearchEngine {
         let isNew: boolean;
         let newTokenCountTotal: number;
 
+        // 生成唯一的分段文件名（从1开始递增）
+        const generateSegmentName = () => {
+            const segments = this.#meta.getSegments(type);
+            const nextNumber = segments.length + 1;
+            return `${type}_seg_${nextNumber}.bin`;
+        };
+
         // 逻辑：确定目标 Segment 和 数据范围
         if (!lastSegInfo) {
             // Case 1: 没有任何 Segment，这是第一个
-            targetSegmentName = `${type}_seg_${Date.now()}.bin`;
+            targetSegmentName = generateSegmentName();
             isNew = true;
             startOffset = 0;
             newTokenCountTotal = addedTokenCount;
@@ -260,7 +275,7 @@ export class SearchEngine {
             // 检查之前的 Segment 是否已经满了，或者加上新增的会超过阈值
             if (existingTokenCount >= segThreshold || (existingTokenCount + addedTokenCount) >= segThreshold) {
                 // Case 2: 上一个满了，或者加上新增的会超过阈值，开启新的
-                targetSegmentName = `${type}_seg_${Date.now()}.bin`;
+                targetSegmentName = generateSegmentName();
                 isNew = true;
                 startOffset = lastSegInfo.end; // 新的起始位置是上一个的结束位置
                 newTokenCountTotal = addedTokenCount;
