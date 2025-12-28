@@ -1,12 +1,12 @@
 # gs-search
 
+JavaScript/TypeScript 애플리케이션을 위한 가볍고 빠르며 메모리 효율적인 전문 검색 엔진입니다.
+
 ## 다른 언어
 
 - [中文 README](README.zh-CN.md)
 - [English README](README.md)
 - [日本語 README](README.ja.md)
-
-JavaScript/TypeScript 애플리케이션을 위한 가볍고 빠르며 메모리 효율적인 전문 검색 엔진입니다.
 
 ## 기능
 
@@ -14,7 +14,6 @@ JavaScript/TypeScript 애플리케이션을 위한 가볍고 빠르며 메모리
  - 📦 **가볍고** 외부 의존성 없음
 - ⚡ **고속** 검색 성능
 - 📱 **브라우저 & Node.js** 지원
-- 🌐 **다국어** 토큰화
 - 🗄️ **커스텀 스토리지** 지원
 - 📊 **일괄 작업** 효율적인 인덱싱
 

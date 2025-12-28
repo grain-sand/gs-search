@@ -1,12 +1,12 @@
 # gs-search
 
+A lightweight, fast, and memory-efficient full-text search engine for JavaScript/TypeScript applications.
+
 ## Other Languages
 
 - [中文 README](README.zh-CN.md)
 - [日本語 README](README.ja.md)
 - [한국어 README](README.ko.md)
-
-A lightweight, fast, and memory-efficient full-text search engine for JavaScript/TypeScript applications.
 
 ## Features
 
@@ -14,7 +14,6 @@ A lightweight, fast, and memory-efficient full-text search engine for JavaScript
 - 📦 **Lightweight** with zero external dependencies
 - ⚡ **Fast** search performance
 - 📱 **Browser & Node.js** support
-- 🌐 **Multi-language** tokenization
 - 🗄️ **Custom storage** support
 - 📊 **Batch operations** for efficient indexing
 

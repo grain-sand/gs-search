@@ -1,6 +1,6 @@
 {
   "name": "gs-search",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -13,6 +13,8 @@
   },
   "types": "lib/index.d.ts",
   "keywords": [
+    "full-text-search",
+    "browser-search-engine"
   ],
   "homepage": "https://github.com/grain-sand/gs-search",
   "repository": {
@@ -23,6 +25,5 @@
     "url": "https://github.com/grain-sand/gs-search/issues"
   },
   "author": "grain-sand",
-  "license": "MIT",
-  "dependencies": {}
+  "license": "MIT"
 }
