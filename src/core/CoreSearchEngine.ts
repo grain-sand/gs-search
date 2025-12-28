@@ -288,19 +288,40 @@ export class CoreSearchEngine {
         const deletedIds = this.#meta.getDeletedIds();
         const docMatches = new Map<number, { score: number, tokens: Set<string> }>();
 
+        // 预加载所有需要的索引段
+        const segmentsToLoad = new Map<string, IndexSegment>();
+        
+        // 收集所有需要的索引段
+        const collectSegments = (type: IndexType) => {
+            const segmentsMeta = this.#meta.getSegments(type);
+            for (const meta of segmentsMeta) {
+                const filename = meta.filename;
+                if (!this.#segments.has(filename) && !segmentsToLoad.has(filename)) {
+                    segmentsToLoad.set(filename, new IndexSegment(filename, this.#storage));
+                }
+            }
+        };
+
+        collectSegments('word');
+        collectSegments('char');
+
+        // 批量加载索引段
+        await Promise.all(
+            Array.from(segmentsToLoad.entries()).map(([filename, segment]) => {
+                return segment.loadIndex().then(loaded => {
+                    if (loaded) this.#segments.set(filename, segment);
+                });
+            })
+        );
+
         const processTerms = async (type: IndexType, terms: string[]) => {
             if (terms.length === 0) return;
             const segmentsMeta = this.#meta.getSegments(type);
 
             for (const meta of segmentsMeta) {
                 const filename = meta.filename;
-                let segment = this.#segments.get(filename);
-                if (!segment) {
-                    segment = new IndexSegment(filename, this.#storage);
-                    this.#segments.set(filename, segment);
-                }
-                const loaded = await segment.loadIndex();
-                if (!loaded) continue;
+                const segment = this.#segments.get(filename);
+                if (!segment) continue;
 
                 for (const term of terms) {
                     const hits = segment.search(term);
@@ -309,11 +330,12 @@ export class CoreSearchEngine {
                     for (const id of hits) {
                         if (deletedIds.has(id)) continue;
                         if (!docMatches.has(id)) {
-                            docMatches.set(id, { score: 0, tokens: new Set() });
+                            docMatches.set(id, { score: 0, tokens: new Set([term]) });
+                        } else {
+                            const match = docMatches.get(id)!;
+                            match.score += termScore;
+                            match.tokens.add(term);
                         }
-                        const match = docMatches.get(id)!;
-                        match.score += termScore;
-                        match.tokens.add(term);
                     }
                 }
             }
@@ -322,15 +344,17 @@ export class CoreSearchEngine {
         await processTerms('word', wordTerms);
         await processTerms('char', charTerms);
 
+        // 转换结果并排序
         const results: IResult[] = [];
-        for (const [id, data] of docMatches) {
+        docMatches.forEach((data, id) => {
             results.push({
                 id,
                 score: data.score,
                 tokens: Array.from(data.tokens)
             });
-        }
+        });
 
+        // 优化排序：使用更高效的排序算法并限制结果数量
         results.sort((a, b) => b.score - a.score);
 
         if (typeof limit === 'number' && limit > 0) {

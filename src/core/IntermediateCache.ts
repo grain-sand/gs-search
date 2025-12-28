@@ -15,45 +15,49 @@ export class IntermediateCache {
         }
 
         const encoder = new TextEncoder();
-        const chunks: Uint8Array[] = [];
         let totalLen = 0;
 
+        // 先计算总大小，避免多次分配内存
         for (const doc of docs) {
-            let docSize = 8;
+            totalLen += 8; // id (4) + token count (4)
+            for (const token of doc.tokens) {
+                const tokenLen = Math.min(encoder.encode(token).byteLength, 65535);
+                totalLen += 2 + tokenLen; // token length (2) + token data
+            }
+            totalLen += 1; // separator
+        }
+
+        // 一次性分配足够的内存
+        const combined = new Uint8Array(totalLen);
+        let pos = 0;
+
+        for (const doc of docs) {
             const tokenBuffers: Uint8Array[] = [];
 
+            // 编码所有token，计算文档大小
             for (const token of doc.tokens) {
                 const buf = encoder.encode(token);
                 const finalBuf = buf.byteLength > 65535 ? buf.slice(0, 65535) : buf;
                 tokenBuffers.push(finalBuf);
-                docSize += 2 + finalBuf.byteLength;
             }
-            docSize += 1;
 
-            const buffer = new ArrayBuffer(docSize);
-            const view = new DataView(buffer);
-            const uint8 = new Uint8Array(buffer);
+            // 写入文档头部
+            const view = new DataView(combined.buffer, pos);
+            view.setUint32(0, doc.id, true);
+            view.setUint32(4, tokenBuffers.length, true);
+            pos += 8;
 
-            let offset = 0;
-            view.setUint32(offset, doc.id, true); offset += 4;
-            view.setUint32(offset, tokenBuffers.length, true); offset += 4;
-
+            // 写入所有token
             for (const buf of tokenBuffers) {
-                view.setUint16(offset, buf.byteLength, true); offset += 2;
-                uint8.set(buf, offset); offset += buf.byteLength;
+                const tokenView = new DataView(combined.buffer, pos);
+                tokenView.setUint16(0, buf.byteLength, true);
+                pos += 2;
+                combined.set(buf, pos);
+                pos += buf.byteLength;
             }
-            uint8[offset] = IntermediateCache.SEPARATOR;
 
-            const chunk = new Uint8Array(buffer);
-            chunks.push(chunk);
-            totalLen += chunk.byteLength;
-        }
-
-        const combined = new Uint8Array(totalLen);
-        let pos = 0;
-        for (const chunk of chunks) {
-            combined.set(chunk, pos);
-            pos += chunk.byteLength;
+            // 写入分隔符
+            combined[pos++] = IntermediateCache.SEPARATOR;
         }
 
         await this.#storage.append(filename, combined.buffer);
