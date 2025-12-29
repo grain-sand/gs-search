@@ -2,7 +2,8 @@
 	"name": "gs-search",
 	"private": true,
 	"scripts": {
-		"test": "vitest run --browser.enabled=false",		  "test:browser": "vitest run --browser.enabled=true",
+		"test": "vitest run --browser.enabled=false",
+		"test:browser": "vitest run --browser.enabled=true",
 		"build": "rollup -c --compact",
 		"dev": "tsx src/index.ts"
 	},

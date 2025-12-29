@@ -72,16 +72,51 @@ const engine = new SearchEngine({
 // 엔진 초기화
 await engine.init();
 
-// 트랜잭션 내에서 문서 추가
-await engine.beginTransaction();
+// 일괄 작업으로 문서 추가
+await engine.startBatch();
 try {
   await engine.addDocuments([
     // ... 문서
   ]);
-  await engine.commit();
 } catch (error) {
-  await engine.rollback();
+  // 오류 처리
+} finally {
+  // 오류가 발생하더라도 항상 일괄 작업을 종료하여 인덱스가 올바르게 재구축되도록 합니다
+  await engine.endBatch();
 }
+```
+
+### 커스텀 토크나이저
+
+특정 언어나 토크나이징 요구사항을 지원하기 위해 커스텀 토크나이저를 설정할 수 있습니다. 토크나이저는 전체 문서 객체에 액세스할 수 있습니다:
+
+```typescript
+import { SearchEngine } from 'gs-search';
+
+// 커스텀 인덱스 토크나이저: 문서의 text와 category 필드를 사용
+const indexingTokenizer = (doc: { id: string; text: string; category: string; author: string }): string[] => {
+  // 문서의 모든 속성에 액세스할 수 있습니다
+  const fullText = `${doc.text} ${doc.category} ${doc.author}`;
+  return fullText.toLowerCase().split(/\s+/);
+};
+
+// 커스텀 검색 토크나이저: 검색 컨텍스트 지원
+const searchTokenizer = (query: { text: string; language?: string; context?: string }): string[] => {
+  // 쿼리의 언어나 컨텍스트에 따라 토크나이징을 조정할 수 있습니다
+  const tokens = query.text.toLowerCase().split(/\s+/);
+  // 컨텍스트에 따라 추가 검색어를 추가합니다
+  if (query.context === 'technical') {
+    tokens.push('technical');
+  }
+  return tokens;
+};
+
+// 커스텀 토크나이저를 설정하여 엔진 생성
+const engine = new SearchEngine({
+  baseDir: 'search-data',
+  indexingTokenizer,
+  searchTokenizer
+});
 ```
 
 ## API 참조
@@ -100,13 +135,13 @@ try {
 - `constructor(options: ICoreSearchOptions)`: 새로운 코어 엔진 인스턴스 생성
 - `init(): Promise<void>`: 엔진 초기화
 - `addDocument(doc: IDocument): Promise<void>`: 단일 문서 추가
-- `addDocuments(docs: IDocument[]): Promise<void>`: 여러 문서 추가
-- `deleteDocument(id: number): Promise<void>`: 문서 삭제
+- `addDocuments(docs: IDocument[]): Promise<void>`: 다중 문서 추가
+- `removeDocument(id: number): Promise<void>`: 문서 삭제
 - `search(query: string, limit?: number): Promise<IResult[]>`: 문서 검색
-- `getStatus(): Promise<IStatus>`: 검색 엔진 상태 가져오기
-- `beginTransaction(): void`: 트랜잭션 시작
-- `commit(): Promise<void>`: 트랜잭션 커밋
-- `rollback(): void`: 트랜잭션 롤백
+- `getStatus(): Promise<IStatus>`: 검색 엔진 상태 조회
+- `hasDocument(id: number): Promise<boolean>`: 문서 ID가 추가된 적이 있는지 확인합니다 (삭제된 문서도 포함)
+- `startBatch(): void`: 배치 작업 시작
+- `endBatch(): Promise<void>`: 배치 작업 종료
 
 ## 스토리지
 

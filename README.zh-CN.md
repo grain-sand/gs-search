@@ -111,30 +111,81 @@ const storage = new CustomStorage();
 const engine = new SearchEngine({ storage });
 ```
 
-### 事务支持
+### 批处理操作
 
-使用事务进行批量操作以提高性能：
+使用批处理操作进行高效的文档索引：
 
 ```typescript
-await engine.startTransaction();
+// 开始批处理操作
+await engine.startBatch();
 
 try {
   // 批量添加文档
   for (let i = 0; i < 1000; i++) {
     await engine.addDocuments([{ id: i, text: `文档 ${i}` }]);
   }
-  
-  // 提交事务
-  await engine.commitTransaction();
 } catch (error) {
-  // 回滚事务
-  await engine.rollbackTransaction();
+  // 处理错误
+  console.error('批处理操作失败:', error);
+} finally {
+  // 无论是否发生错误，都必须结束批处理以确保索引正常重建
+  await engine.endBatch();
 }
 ```
 
 ## 自定义分词器
 
-您可以通过配置自定义分词器来支持特定的语言或分词需求。以下是一个简单的正则分词器示例，按空格和字符分词，且最长token不超过5字符：
+### 支持完整文档对象的分词器
+
+您可以通过配置自定义分词器来支持特定的语言或分词需求。分词器可以访问完整的文档对象，让您能够基于文档的多个属性进行分词：
+
+```typescript
+import { SearchEngine } from 'gs-search';
+
+// 自定义索引分词器：使用文档的text和category字段进行分词
+const indexingTokenizer = (doc: { id: string; text: string; category: string; author: string }): string[] => {
+  // 可以访问文档的所有属性
+  const fullText = `${doc.text} ${doc.category} ${doc.author}`;
+  return fullText.toLowerCase().split(/\s+/);
+};
+
+// 自定义搜索分词器：支持搜索上下文
+const searchTokenizer = (query: { text: string; language?: string; context?: string }): string[] => {
+  // 可以根据查询的语言或上下文调整分词
+  const tokens = query.text.toLowerCase().split(/\s+/);
+  // 根据上下文添加额外的搜索词
+  if (query.context === 'technical') {
+    tokens.push('technical');
+  }
+  return tokens;
+};
+
+// 创建引擎并配置自定义分词器
+const engine = new SearchEngine({
+  baseDir: 'search-data',
+  indexingTokenizer,
+  searchTokenizer
+});
+
+// 索引包含额外属性的文档
+await engine.addDocument({
+  id: '1',
+  text: '这是一个技术文档',
+  category: '技术',
+  author: '张三'
+});
+
+// 使用包含上下文的查询进行搜索
+const results = await engine.search({
+  text: '技术',
+  language: 'zh',
+  context: 'technical'
+});
+```
+
+### 简单的字符/空格分词器
+
+以下是一个简单的正则分词器示例，按空格和字符分词，且最长token不超过5字符：
 
 ```typescript
 import { SimpleSearch } from 'gs-search';
@@ -178,7 +229,8 @@ SimpleSearch.configure({
 - `removeDocument(id: number): Promise<void>`: 删除文档
 - `search(query: string, limit?: number): Promise<IResult[]>`: 搜索文档
 - `getStatus(): Promise<IStatus>`: 获取搜索引擎状态
-- `startBatch(): void`: 开始批处理操作
+- `hasDocument(id: number): Promise<boolean>`: 检查文档ID是否曾经添加过（包括已删除的）
+- `startBatch(): void`: 开始批量操作
 - `endBatch(): Promise<void>`: 结束批处理操作
 
 ### CoreSearchEngine

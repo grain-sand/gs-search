@@ -5,7 +5,10 @@ import {IDocument, IDocumentBase, SearchEngine} from '../src';
 
 function getTestBaseDir() {
   let workerId = '0';
-  if (typeof process !== 'undefined' && process.env) {
+  // 检查是否为浏览器环境
+  const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+  
+  if (!isBrowser && typeof process !== 'undefined' && process.env) {
     workerId = process.env.VITEST_POOL_ID || process.env.JEST_WORKER_ID || '0';
   }
   return `tokenizer_params_test_${workerId}`;
@@ -13,11 +16,14 @@ function getTestBaseDir() {
 
 describe('Tokenizer Parameters', () => {
   let engine: SearchEngine;
+  // 保存所有创建的SearchEngine实例，用于浏览器环境清理
+  const enginesToClean: SearchEngine[] = [];
 
   beforeEach(() => {
     engine = new SearchEngine({
       baseDir: getTestBaseDir(),
     });
+    enginesToClean.push(engine);
   });
 
   it('should pass full document object to indexingTokenizer', async () => {
@@ -36,9 +42,12 @@ describe('Tokenizer Parameters', () => {
         return doc.text.split(' ');
       },
     });
+    enginesToClean.push(customEngine);
 
+    // 使用当前时间戳作为ID，确保唯一
+    const uniqueId = Date.now();
     const testDoc: CustomDocument = {
-      id: 1,
+      id: uniqueId,
       text: 'Hello world',
       category: 'test',
       author: 'test-author'
@@ -49,7 +58,7 @@ describe('Tokenizer Parameters', () => {
 
     expect(capturedDocuments.length).toBe(1);
     expect(capturedDocuments[0]).toEqual(testDoc);
-    expect(capturedDocuments[0]).toHaveProperty('id', '1');
+    expect(capturedDocuments[0]).toHaveProperty('id', uniqueId);
     expect(capturedDocuments[0]).toHaveProperty('text', 'Hello world');
     expect(capturedDocuments[0]).toHaveProperty('category', 'test');
     expect(capturedDocuments[0]).toHaveProperty('author', 'test-author');
@@ -71,16 +80,19 @@ describe('Tokenizer Parameters', () => {
         return doc.text.split(' ');
       },
     });
+    enginesToClean.push(customEngine);
 
+    // 使用当前时间戳作为基础，为每个文档生成唯一ID
+    const baseId = Date.now();
     const testDocs: CustomDocument[] = [
       {
-        id: 1,
+        id: baseId,
         text: 'Hello world',
         tags: ['test'],
         priority: 1
       },
       {
-        id: 2,
+        id: baseId + 1,
         text: 'Another document',
         tags: ['test', 'another'],
         priority: 2
@@ -117,8 +129,9 @@ describe('Tokenizer Parameters', () => {
         return query.text.split(' ');
       },
     });
+    enginesToClean.push(customEngine);
 
-    customEngine.addDocument({ id: 1, text: 'Hello world' });
+    customEngine.addDocument({ id: Date.now(), text: 'Hello world' });
 
     const testQuery: CustomSearchDoc = {
       text: 'Hello',
@@ -147,8 +160,9 @@ describe('Tokenizer Parameters', () => {
         return query.text.split(' ');
       },
     });
+    enginesToClean.push(customEngine);
 
-    await customEngine.addDocument({ id: 1, text: 'Hello world' });
+    await customEngine.addDocument({ id: Date.now(), text: 'Hello world' });
     await customEngine.search<any>('Hello');
 
     expect(capturedQueries.length).toBe(1);
@@ -156,9 +170,18 @@ describe('Tokenizer Parameters', () => {
   });
 
   afterAll(async () => {
+    // 清理所有创建的SearchEngine实例的数据
+    for (const engine of enginesToClean) {
+      try {
+        await engine.clearAll();
+      } catch (e) {
+        console.error('Failed to clear engine data:', e);
+      }
+    }
+    
     const base = getTestBaseDir();
     const dirsToClean = [base, base + '_1', base + '_2', base + '_3', base + '_4'];
-    // 仅在 Node.js 环境中执行清理
+    // 仅在 Node.js 环境中执行文件系统清理
     if (typeof process !== 'undefined' && process.versions && process.versions.node) {
       try {
         const fs = await import('node:fs');
@@ -166,7 +189,8 @@ describe('Tokenizer Parameters', () => {
           if (fs.existsSync(d)) {
             try {
               fs.rmSync(d, { recursive: true, force: true });
-            } catch (e) {
+            }
+            catch (e) {
               console.error(`Failed to cleanup test dir ${d}:`, e);
             }
           }

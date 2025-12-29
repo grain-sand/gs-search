@@ -9,7 +9,6 @@ lerna-debug.log*
 
 node_modules
 .DS_Store
-tmp-test
 dist/lib
 dist/*.md
 dist-ssr
@@ -18,6 +17,7 @@ coverage
 /*.lock
 /*.lock.*
 
+tmp-*
 core_test_data_*
 tokenizer_params_test_*
 simple_test_data

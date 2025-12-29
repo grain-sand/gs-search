@@ -143,6 +143,15 @@ export class MetaManager {
         return this.#addedIds;
     }
 
+    /**
+     * 检查文档ID是否曾经添加过（包括已删除的）
+     * @param id 文档ID
+     * @returns 文档是否曾经添加过的布尔值
+     */
+    hasDocument(id: number): boolean {
+        return this.#addedIds.has(id) || this.#deletedIds.has(id);
+    }
+
     getLastSegmentInfo(type: IndexType) {
         const segments = this.getSegments(type);
         if (segments.length === 0) return null;

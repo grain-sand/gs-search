@@ -121,7 +121,7 @@ export class SearchEngine {
      */
     async endBatch() {
         this.#inBatch = false;
-        
+
         // 检查是否有挂起的数据需要处理
         if (this.#pendingTokenCounts.word > 0) {
             await this.#processSegmentLogic('word', this.#pendingTokenCounts.word);
@@ -135,14 +135,23 @@ export class SearchEngine {
     }
 
     #defaultTokenize(text: string): string[] {
-        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
-            // @ts-ignore
-            const segmenter = new Intl.Segmenter([], { granularity: 'word' });
-            // @ts-ignore
-            return Array.from(segmenter.segment(text))
-                .filter((s: any) => s.isWordLike)
-                .map((s: any) => s.segment.toLowerCase());
+        try {
+            // 检查Intl.Segmenter是否可用且支持所需的功能
+            if (typeof Intl !== 'undefined' &&
+                typeof Intl.Segmenter === 'function' &&
+                typeof Array.from === 'function') {
+                const segmenter = new Intl.Segmenter([], { granularity: 'word' });
+                const segments = segmenter.segment(text);
+                if (typeof segments === 'object' && segments !== null) {
+                    return Array.from(segments)
+                        .filter((s: any) => s?.isWordLike)
+                        .map((s: any) => s?.segment?.toLowerCase() || '');
+                }
+            }
+        } catch (e) {
+            // 忽略任何Intl.Segmenter相关的错误，回退到基本分词
         }
+        // 基本分词逻辑，确保在所有环境下都能工作
         return text.toLowerCase().split(/[^a-z0-9\u4e00-\u9fa5]+/g).filter(t => t.length > 0);
     }
 
@@ -157,10 +166,7 @@ export class SearchEngine {
         if (this.#config.searchTokenizer) {
             return this.#config.searchTokenizer(doc);
         }
-        if (this.#config.indexingTokenizer) {
-            return this.#config.indexingTokenizer({ ...doc, id: 0 } as IDocument);
-        }
-        return this.#defaultTokenize(doc.text);
+        return this.#getIndexingTokens(doc as any);
     }
 
     async addDocument<T extends IDocument = IDocument>(doc: T): Promise<void> {
@@ -425,5 +431,15 @@ export class SearchEngine {
             charCacheSize: await this.#cache.getCurrentSize(CHAR_CACHE_FILE),
             inBatch: this.#inBatch
         };
+    }
+
+    /**
+     * 检查文档ID是否曾经添加过（包括已删除的）
+     * @param id 文档ID
+     * @returns 文档是否曾经添加过的布尔值
+     */
+    async hasDocument(id: number): Promise<boolean> {
+        if (!this.#initialized) await this.init();
+        return this.#meta.hasDocument(id);
     }
 }

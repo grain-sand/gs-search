@@ -72,16 +72,51 @@ const engine = new SearchEngine({
 // エンジンを初期化
 await engine.init();
 
-// トランザクション内でドキュメントを追加
-await engine.beginTransaction();
+// バッチ操作でドキュメントを追加
+await engine.startBatch();
 try {
   await engine.addDocuments([
     // ... ドキュメント
   ]);
-  await engine.commit();
 } catch (error) {
-  await engine.rollback();
+  // エラー処理
+} finally {
+  // エラーが発生しても必ずバッチを終了し、インデックスが正しく再構築されるようにする
+  await engine.endBatch();
 }
+```
+
+### カスタムトークナイザ
+
+特定の言語やトークン化の要件をサポートするために、カスタムトークナイザを設定できます。トークナイザは完全なドキュメントオブジェクトにアクセスできます：
+
+```typescript
+import { SearchEngine } from 'gs-search';
+
+// カスタムインデックストークナイザ：ドキュメントの複数フィールドを使用
+const indexingTokenizer = (doc: { id: string; text: string; category: string; author: string }): string[] => {
+  // ドキュメントの全てのプロパティにアクセスできます
+  const fullText = `${doc.text} ${doc.category} ${doc.author}`;
+  return fullText.toLowerCase().split(/\s+/);
+};
+
+// カスタム検索トークナイザ：検索コンテキストをサポート
+const searchTokenizer = (query: { text: string; language?: string; context?: string }): string[] => {
+  // クエリの言語やコンテキストに応じてトークン化を調整できます
+  const tokens = query.text.toLowerCase().split(/\s+/);
+  // コンテキストに応じて追加の検索語を追加
+  if (query.context === 'technical') {
+    tokens.push('technical');
+  }
+  return tokens;
+};
+
+// カスタムトークナイザを設定してエンジンを作成
+const engine = new SearchEngine({
+  baseDir: 'search-data',
+  indexingTokenizer,
+  searchTokenizer
+});
 ```
 
 ## APIリファレンス
@@ -91,7 +126,7 @@ try {
 - `constructor()`: 新しい検索エンジンインスタンスを作成
 - `addDocument(doc: IDocument): Promise<void>`: 単一のドキュメントを追加
 - `addDocuments(docs: IDocument[]): Promise<void>`: 複数のドキュメントを追加
-- `deleteDocument(id: number): Promise<void>`: ドキュメントを削除
+- `removeDocument(id: number): Promise<void>`: ドキュメントを削除
 - `search(query: string, limit?: number): Promise<IResult[]>`: ドキュメントを検索
 - `getStatus(): Promise<IStatus>`: 検索エンジンのステータスを取得
 
@@ -99,14 +134,14 @@ try {
 
 - `constructor(options: ICoreSearchOptions)`: 新しいコアエンジンインスタンスを作成
 - `init(): Promise<void>`: エンジンを初期化
-- `addDocument(doc: IDocument): Promise<void>`: 単一のドキュメントを追加
-- `addDocuments(docs: IDocument[]): Promise<void>`: 複数のドキュメントを追加
-- `deleteDocument(id: number): Promise<void>`: ドキュメントを削除
+- `addDocument(doc: IDocument): Promise<void>`: 単一ドキュメントを追加
+- `addDocuments(docs: IDocument[]): Promise<void>`: 複数ドキュメントを追加
+- `removeDocument(id: number): Promise<void>`: ドキュメントを削除
 - `search(query: string, limit?: number): Promise<IResult[]>`: ドキュメントを検索
-- `getStatus(): Promise<IStatus>`: 検索エンジンのステータスを取得
-- `beginTransaction(): void`: トランザクションを開始
-- `commit(): Promise<void>`: トランザクションをコミット
-- `rollback(): void`: トランザクションをロールバック
+- `getStatus(): Promise<IStatus>`: 検索エンジンの状態を取得する
+- `hasDocument(id: number): Promise<boolean>`: ドキュメントIDが追加されたことがあるかを確認（削除されたものも含む）
+- `startBatch(): void`: バッチ操作を開始する
+- `endBatch(): Promise<void>`: バッチ操作を終了
 
 ## ストレージ
 

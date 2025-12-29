@@ -78,10 +78,48 @@ try {
   await engine.addDocuments([
     // ... documents
   ]);
-  await engine.endBatch();
 } catch (error) {
   // Handle error
+} finally {
+  // Always end batch to ensure index rebuilds properly
+  await engine.endBatch();
 }
+```
+
+### Custom Tokenizers
+
+You can configure custom tokenizers to support specific languages or tokenization requirements:
+
+```typescript
+import { SearchEngine, BrowserStorage } from 'gs-search';
+
+// Custom tokenizer that splits by spaces and limits token length
+const customTokenizer = (text: string): string[] => {
+  // Split by whitespace
+  const tokens: string[] = [];
+  const words = text.toLowerCase().split(/\s+/);
+  
+  // Process each word, limiting token length to 5 characters
+  for (const word of words) {
+    if (word.length <= 5) {
+      tokens.push(word);
+    } else {
+      // Split long words character by character
+      for (let i = 0; i < word.length; i++) {
+        tokens.push(word[i]);
+      }
+    }
+  }
+  
+  return tokens;
+};
+
+// Create engine with custom tokenizers
+const engine = new SearchEngine({
+  baseDir: 'search-data',
+  indexingTokenizer: customTokenizer,
+  searchTokenizer: customTokenizer
+});
 ```
 
 ## API Reference
@@ -95,6 +133,7 @@ try {
 - `removeDocument(id: number): Promise<void>`: Delete a document
 - `search(query: string, limit?: number): Promise<IResult[]>`: Search for documents
 - `getStatus(): Promise<IStatus>`: Get search engine status
+- `hasDocument(id: number): Promise<boolean>`: Checks if a document ID has been added (including deleted ones)
 - `startBatch(): void`: Start batch operations
 - `endBatch(): Promise<void>`: End batch operations
 

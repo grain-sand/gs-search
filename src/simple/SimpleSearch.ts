@@ -64,4 +64,13 @@ export class SimpleSearch {
     static async getStatus() {
         return this.#getInstance().getStatus();
     }
+
+    /**
+     * 检查文档ID是否曾经添加过（包括已删除的）
+     * @param id 文档ID
+     * @returns 文档是否曾经添加过的布尔值
+     */
+    static async hasDocument(id: number): Promise<boolean> {
+        return this.#getInstance().hasDocument(id);
+    }
 }
