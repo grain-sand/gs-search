@@ -19,6 +19,7 @@ coverage
 /*.lock.*
 
 core_test_data_*
+tokenizer_params_test_*
 simple_test_data
 
 /cypress/videos/

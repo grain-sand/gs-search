@@ -2,7 +2,7 @@ import { BrowserStorage, NodeStorage } from './Storage';
 import { MetaManager } from './MetaManager';
 import { IntermediateCache } from './IntermediateCache';
 import { IndexSegment } from './IndexSegment';
-import { IDocument, IResult, ITokenizedDoc, ISearchEngineConfig, IndexType, IStorage } from './Types';
+import { IDocument, IDocumentBase, IResult, ITokenizedDoc, ISearchEngineConfig, IndexType, IStorage } from './Types';
 
 const WORD_CACHE_FILE = 'word_cache.bin';
 const CHAR_CACHE_FILE = 'char_cache.bin';
@@ -146,28 +146,28 @@ export class SearchEngine {
         return text.toLowerCase().split(/[^a-z0-9\u4e00-\u9fa5]+/g).filter(t => t.length > 0);
     }
 
-    #getIndexingTokens(text: string): string[] {
+    #getIndexingTokens<T extends IDocument = IDocument>(doc: T): string[] {
         if (this.#config.indexingTokenizer) {
-            return this.#config.indexingTokenizer(text);
+            return this.#config.indexingTokenizer(doc);
         }
-        return this.#defaultTokenize(text);
+        return this.#defaultTokenize(doc.text);
     }
 
-    #getSearchTokens(text: string): string[] {
+    #getSearchTokens<T extends IDocumentBase = IDocumentBase>(doc: T): string[] {
         if (this.#config.searchTokenizer) {
-            return this.#config.searchTokenizer(text);
+            return this.#config.searchTokenizer(doc);
         }
         if (this.#config.indexingTokenizer) {
-            return this.#config.indexingTokenizer(text);
+            return this.#config.indexingTokenizer({ ...doc, id: 0 } as IDocument);
         }
-        return this.#defaultTokenize(text);
+        return this.#defaultTokenize(doc.text);
     }
 
-    async addDocument(doc: IDocument): Promise<void> {
+    async addDocument<T extends IDocument = IDocument>(doc: T): Promise<void> {
         return this.addDocuments([doc]);
     }
 
-    async addDocuments(docs: IDocument[]): Promise<void> {
+    async addDocuments<T extends IDocument = IDocument>(docs: T[]): Promise<void> {
         if (!this.#initialized) await this.init();
         if (docs.length === 0) return;
 
@@ -185,7 +185,7 @@ export class SearchEngine {
             if (this.#meta.isAdded(doc.id)) {
                 throw new Error(`Document ID ${doc.id} already exists.`);
             }
-            const rawTokens = this.#getIndexingTokens(doc.text);
+            const rawTokens = this.#getIndexingTokens(doc);
             const wordTokens: string[] = [];
             const charTokens: string[] = [];
 
@@ -311,10 +311,12 @@ export class SearchEngine {
         this.#meta.updateSegment(type, targetSegmentName, startOffset, currentCacheSize, newTokenCountTotal, isNew);
     }
 
-    async search(query: string, limit?: number): Promise<IResult[]> {
+    async search<T extends IDocumentBase = IDocumentBase>(query: T | string, limit?: number): Promise<IResult[]> {
         if (!this.#initialized) await this.init();
 
-        const rawTokens = this.#getSearchTokens(query);
+        // Convert string query to IDocumentBase
+        const queryDoc = typeof query === 'string' ? { text: query } : query;
+        const rawTokens = this.#getSearchTokens(queryDoc);
         const wordTerms = rawTokens.filter(t => t.length > 1);
         const charTerms = rawTokens.filter(t => t.length === 1);
 

@@ -2,9 +2,12 @@
  * 核心类型定义
  */
 
-export interface IDocument {
-    id: number;
+export interface IDocumentBase {
     text: string;
+}
+
+export interface IDocument extends IDocumentBase {
+    id: number;
 }
 
 export interface IResult {
@@ -71,7 +74,7 @@ export interface ISearchEngineConfig {
      * - 建议: 针对不同语言(中文/英文/日文等)使用专门的分词实现
      * - 影响: 直接决定索引的粒度和搜索的准确性
      */
-    indexingTokenizer?: (text: string) => string[];
+    indexingTokenizer?: <T extends IDocument = IDocument>(doc: T) => string[];
 
     /**
      * 搜索时使用的分词器 (算法核心配置)
@@ -80,7 +83,7 @@ export interface ISearchEngineConfig {
      * - 建议: 与indexingTokenizer保持一致的分词策略以确保搜索准确性
      * - 影响: 直接决定搜索匹配的范围和结果的相关性
      */
-    searchTokenizer?: (text: string) => string[];
+    searchTokenizer?: <T extends IDocumentBase = IDocumentBase>(doc: T) => string[];
 
     /**
      * 词索引分段阈值 (Token数) - 分段算法配置

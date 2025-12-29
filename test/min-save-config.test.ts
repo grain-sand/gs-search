@@ -18,7 +18,7 @@ describe('Min Token Save Configuration', () => {
 			storage: mockStorage,
 			minWordTokenSave: 5, // 设置最小保存阈值为5
 			// 确保token长度大于1，这样会被归类为wordTokens
-			indexingTokenizer: (text) => text.split(' ')
+			indexingTokenizer: (doc) => doc.text.split(' ')
 		});
 
 		// 1. 添加少量文档，未达到阈值，不应创建索引
@@ -40,7 +40,7 @@ describe('Min Token Save Configuration', () => {
 			baseDir: getTestBaseDir('min-save'),
 			storage: mockStorage,
 			minCharTokenSave: 5, // 设置最小保存阈值为5
-			indexingTokenizer: (text) => text.split('').filter(char => char.trim() !== '')
+			indexingTokenizer: (doc) => doc.text.split('').filter(char => char.trim() !== '')
 		});
 
 		// 1. 添加少量文档，未达到阈值，不应创建索引

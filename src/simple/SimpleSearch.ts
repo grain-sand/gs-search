@@ -1,5 +1,5 @@
 import {SearchEngine} from '../core/SearchEngine';
-import {IDocument, ISearchEngineConfig} from '../core/Types';
+import {IDocument, IDocumentBase, ISearchEngineConfig} from '../core/Types';
 
 /**
  * 快速使用封装
@@ -41,15 +41,15 @@ export class SimpleSearch {
         return this.#getInstance().endBatch();
     }
 
-    static async addDocument(doc: IDocument) {
+    static async addDocument<T extends IDocument = IDocument>(doc: T) {
         return this.#getInstance().addDocument(doc);
     }
 
-    static async addDocuments(docs: IDocument[]) {
+    static async addDocuments<T extends IDocument = IDocument>(docs: T[]) {
         return this.#getInstance().addDocuments(docs);
     }
 
-    static async search(query: string, limit?: number) {
+    static async search<T extends IDocumentBase = IDocumentBase>(query: T | string, limit?: number) {
         return this.#getInstance().search(query, limit);
     }
 
