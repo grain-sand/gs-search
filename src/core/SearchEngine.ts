@@ -173,6 +173,89 @@ export class SearchEngine {
         return this.addDocuments([doc]);
     }
 
+    /**
+     * 添加单个文档，如果文档ID已存在则跳过
+     * 用于在批量添加中途出错后的恢复添加行为，也可直接用于单个文档添加
+     */
+    async addDocumentIfMissing<T extends IDocument = IDocument>(doc: T): Promise<void> {
+        return this.addDocumentsIfMissing([doc]);
+    }
+
+    /**
+     * 添加多个文档，跳过已存在的文档ID
+     * 用于在批量添加中途出错后的恢复添加行为，也可直接用于批量添加
+     */
+    async addDocumentsIfMissing<T extends IDocument = IDocument>(docs: T[]): Promise<void> {
+        if (!this.#initialized) await this.init();
+        if (docs.length === 0) return;
+
+        const deletedIds = this.#meta.getDeletedIds();
+        const batchWordDocs: ITokenizedDoc[] = [];
+        const batchCharDocs: ITokenizedDoc[] = [];
+        const newDocs: T[] = [];
+
+        // 1. 分词与分类，跳过已存在或已删除的文档
+        for (const doc of docs) {
+            // 检查文档ID是否已被删除
+            if (deletedIds.has(doc.id)) {
+                continue;
+            }
+            // 检查文档ID是否已存在
+            if (this.#meta.isAdded(doc.id)) {
+                continue;
+            }
+            const rawTokens = this.#getIndexingTokens(doc);
+            const wordTokens: string[] = [];
+            const charTokens: string[] = [];
+
+            for (const t of rawTokens) {
+                if (t.length > 1) {
+                    wordTokens.push(t);
+                } else if (t.length === 1) {
+                    charTokens.push(t);
+                }
+            }
+
+            if (wordTokens.length > 0) batchWordDocs.push({ id: doc.id, tokens: wordTokens });
+            if (charTokens.length > 0) batchCharDocs.push({ id: doc.id, tokens: charTokens });
+            newDocs.push(doc);
+        }
+
+        // 如果没有新文档需要添加，直接返回
+        if (newDocs.length === 0) return;
+
+        // 2. 写入 Cache (必须立即持久化以防丢失)
+        let addedWordTokens = 0;
+        let addedCharTokens = 0;
+
+        if (batchWordDocs.length > 0) {
+            await this.#cache.appendBatch(WORD_CACHE_FILE, batchWordDocs);
+            for (const d of batchWordDocs) addedWordTokens += d.tokens.length;
+        }
+
+        if (batchCharDocs.length > 0) {
+            await this.#cache.appendBatch(CHAR_CACHE_FILE, batchCharDocs);
+            for (const d of batchCharDocs) addedCharTokens += d.tokens.length;
+        }
+
+        // 更新已添加ID集合
+        for (const doc of newDocs) {
+            this.#meta.addAddedId(doc.id);
+        }
+
+        // 3. 处理逻辑分支
+        if (this.#inBatch) {
+            // 批处理模式：累加计数，暂不处理 Segment
+            this.#pendingTokenCounts.word += addedWordTokens;
+            this.#pendingTokenCounts.char += addedCharTokens;
+        } else {
+            // 实时模式：立即处理并保存
+            if (addedWordTokens > 0) await this.#processSegmentLogic('word', addedWordTokens);
+            if (addedCharTokens > 0) await this.#processSegmentLogic('char', addedCharTokens);
+            await this.#meta.save();
+        }
+    }
+
     async addDocuments<T extends IDocument = IDocument>(docs: T[]): Promise<void> {
         if (!this.#initialized) await this.init();
         if (docs.length === 0) return;

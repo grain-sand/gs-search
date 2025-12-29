@@ -21,10 +21,13 @@ describe('SimpleSearch (Facade)', () => {
 
 	it('should support batch operations', async () => {
 		await SimpleSearch.startBatch();
-		await SimpleSearch.addDocument({id: 1, text: "batch test"});
-		await SimpleSearch.endBatch();
+		try {
+			await SimpleSearch.addDocument({id: 1, text: "batch test"});
+		} finally {
+			await SimpleSearch.endBatch();
+		}
 
-		const res = await SimpleSearch.search("batch");
+		const res = await SimpleSearch.search<any>("batch");
 		expect(res.length).toBe(1);
 	});
 });

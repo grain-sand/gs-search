@@ -126,16 +126,20 @@ const engine = new SearchEngine({
 - `constructor()`: 新しい検索エンジンインスタンスを作成
 - `addDocument(doc: IDocument): Promise<void>`: 単一のドキュメントを追加
 - `addDocuments(docs: IDocument[]): Promise<void>`: 複数のドキュメントを追加
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: ドキュメントが存在しない場合は単一のドキュメントを追加
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: 複数のドキュメントを追加し、既存のドキュメントはスキップ
 - `removeDocument(id: number): Promise<void>`: ドキュメントを削除
 - `search(query: string, limit?: number): Promise<IResult[]>`: ドキュメントを検索
 - `getStatus(): Promise<IStatus>`: 検索エンジンのステータスを取得
 
-### CoreSearchEngine
+### SearchEngine
 
-- `constructor(options: ICoreSearchOptions)`: 新しいコアエンジンインスタンスを作成
+- `constructor(options: ISearchEngineConfig)`: 新しいコアエンジンインスタンスを作成
 - `init(): Promise<void>`: エンジンを初期化
 - `addDocument(doc: IDocument): Promise<void>`: 単一ドキュメントを追加
 - `addDocuments(docs: IDocument[]): Promise<void>`: 複数ドキュメントを追加
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: ドキュメントが存在しない場合は単一のドキュメントを追加
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: 複数のドキュメントを追加し、既存のドキュメントはスキップ
 - `removeDocument(id: number): Promise<void>`: ドキュメントを削除
 - `search(query: string, limit?: number): Promise<IResult[]>`: ドキュメントを検索
 - `getStatus(): Promise<IStatus>`: 検索エンジンの状態を取得する

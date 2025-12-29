@@ -130,6 +130,8 @@ const engine = new SearchEngine({
 - `configure(config: Partial<ISearchEngineConfig>): void`: Configure the search engine
 - `addDocument(doc: IDocument): Promise<void>`: Add a single document
 - `addDocuments(docs: IDocument[]): Promise<void>`: Add multiple documents
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: Add a single document if it doesn't exist
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: Add multiple documents, skipping existing ones
 - `removeDocument(id: number): Promise<void>`: Delete a document
 - `search(query: string, limit?: number): Promise<IResult[]>`: Search for documents
 - `getStatus(): Promise<IStatus>`: Get search engine status
@@ -137,12 +139,14 @@ const engine = new SearchEngine({
 - `startBatch(): void`: Start batch operations
 - `endBatch(): Promise<void>`: End batch operations
 
-### CoreSearchEngine
+### SearchEngine
 
-- `constructor(options: ICoreSearchOptions)`: Create a new core engine instance
+- `constructor(options: ISearchEngineConfig)`: Create a new core engine instance
 - `init(): Promise<void>`: Initialize the engine
 - `addDocument(doc: IDocument): Promise<void>`: Add a single document
 - `addDocuments(docs: IDocument[]): Promise<void>`: Add multiple documents
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: Add a single document if it doesn't exist
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: Add multiple documents, skipping existing ones
 - `removeDocument(id: number): Promise<void>`: Delete a document
 - `search(query: string, limit?: number): Promise<IResult[]>`: Search for documents
 - `getStatus(): Promise<IStatus>`: Get search engine status

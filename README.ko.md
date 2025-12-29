@@ -126,16 +126,20 @@ const engine = new SearchEngine({
 - `constructor()`: 새로운 검색 엔진 인스턴스 생성
 - `addDocument(doc: IDocument): Promise<void>`: 단일 문서 추가
 - `addDocuments(docs: IDocument[]): Promise<void>`: 여러 문서 추가
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: 문서가 존재하지 않는 경우 단일 문서 추가
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: 여러 문서를 추가하고 기존 문서는 건너뜀
 - `deleteDocument(id: number): Promise<void>`: 문서 삭제
 - `search(query: string, limit?: number): Promise<IResult[]>`: 문서 검색
 - `getStatus(): Promise<IStatus>`: 검색 엔진 상태 가져오기
 
-### CoreSearchEngine
+### SearchEngine
 
-- `constructor(options: ICoreSearchOptions)`: 새로운 코어 엔진 인스턴스 생성
+- `constructor(options: ISearchEngineConfig)`: 새로운 코어 엔진 인스턴스 생성
 - `init(): Promise<void>`: 엔진 초기화
 - `addDocument(doc: IDocument): Promise<void>`: 단일 문서 추가
 - `addDocuments(docs: IDocument[]): Promise<void>`: 다중 문서 추가
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: 문서가 존재하지 않는 경우 단일 문서 추가
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: 여러 문서를 추가하고 기존 문서는 건너뜀
 - `removeDocument(id: number): Promise<void>`: 문서 삭제
 - `search(query: string, limit?: number): Promise<IResult[]>`: 문서 검색
 - `getStatus(): Promise<IStatus>`: 검색 엔진 상태 조회

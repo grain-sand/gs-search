@@ -78,9 +78,11 @@ try {
   await engine.addDocuments([
     // ... 文档
   ]);
-  await engine.endBatch();
 } catch (error) {
   // 处理错误
+} finally {
+  // 始终结束批处理以确保索引正确重建
+  await engine.endBatch();
 }
 ```
 
@@ -222,10 +224,12 @@ SimpleSearch.configure({
 
 ### SimpleSearch
 
-**静态方法（无需创建实例）：**
+**静态方法（无需实例创建）：**
 - `configure(config: Partial<ISearchEngineConfig>): void`: 配置搜索引擎
 - `addDocument(doc: IDocument): Promise<void>`: 添加单个文档
-- `addDocuments(docs: IDocument[]): Promise<void>`: 批量添加文档
+- `addDocuments(docs: IDocument[]): Promise<void>`: 添加多个文档
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: 如果文档不存在则添加单个文档
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: 添加多个文档，跳过已存在的文档
 - `removeDocument(id: number): Promise<void>`: 删除文档
 - `search(query: string, limit?: number): Promise<IResult[]>`: 搜索文档
 - `getStatus(): Promise<IStatus>`: 获取搜索引擎状态
@@ -233,12 +237,14 @@ SimpleSearch.configure({
 - `startBatch(): void`: 开始批量操作
 - `endBatch(): Promise<void>`: 结束批处理操作
 
-### CoreSearchEngine
+### SearchEngine
 
-- `constructor(options: ICoreSearchOptions)`: 创建核心引擎实例
+- `constructor(options: ISearchEngineConfig)`: 创建一个新的核心引擎实例
 - `init(): Promise<void>`: 初始化引擎
 - `addDocument(doc: IDocument): Promise<void>`: 添加单个文档
-- `addDocuments(docs: IDocument[]): Promise<void>`: 批量添加文档
+- `addDocuments(docs: IDocument[]): Promise<void>`: 添加多个文档
+- `addDocumentIfMissing(doc: IDocument): Promise<void>`: 如果文档不存在则添加单个文档
+- `addDocumentsIfMissing(docs: IDocument[]): Promise<void>`: 添加多个文档，跳过已存在的文档
 - `removeDocument(id: number): Promise<void>`: 删除文档
 - `search(query: string, limit?: number): Promise<IResult[]>`: 搜索文档
 - `getStatus(): Promise<IStatus>`: 获取搜索引擎状态

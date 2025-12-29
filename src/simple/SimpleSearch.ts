@@ -45,8 +45,16 @@ export class SimpleSearch {
         return this.#getInstance().addDocument(doc);
     }
 
+    static async addDocumentIfMissing<T extends IDocument = IDocument>(doc: T) {
+        return this.#getInstance().addDocumentIfMissing(doc);
+    }
+
     static async addDocuments<T extends IDocument = IDocument>(docs: T[]) {
         return this.#getInstance().addDocuments(docs);
+    }
+
+    static async addDocumentsIfMissing<T extends IDocument = IDocument>(docs: T[]) {
+        return this.#getInstance().addDocumentsIfMissing(docs);
     }
 
     static async search<T extends IDocumentBase = IDocumentBase>(query: T | string, limit?: number) {
