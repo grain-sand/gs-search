@@ -1,4 +1,5 @@
 import { ITokenizedDoc, IStorage } from './Types';
+import { hash } from './Hash';
 
 export class IndexSegment {
     #filename: string;
@@ -6,12 +7,13 @@ export class IndexSegment {
     #buffer: ArrayBuffer | null = null;
     #view: DataView | null = null;
 
+    /**
+     * 使用MurmurHash3计算字符串哈希值
+     * @param str 要哈希的字符串
+     * @returns 32位无符号哈希值
+     */
     static hash(str: string): number {
-        let hash = 5381;
-        for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
-        }
-        return hash >>> 0;
+        return hash(str);
     }
 
     constructor(filename: string, storage: IStorage) {
