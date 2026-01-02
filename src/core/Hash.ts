@@ -6,60 +6,54 @@
 /**
  * 计算字符串的32位MurmurHash3哈希值
  * @param str 要哈希的字符串
- * @param seed 哈希种子，默认为0x12345678（经过实践检验的非零种子，可减少哈希冲突）
+ * @param h
  * @returns 32位无符号哈希值
  */
-export function murmur3_32(str: string, seed: number = 0x12345678): number {
-    let h = seed;
-    const k1 = new Uint32Array(1);
-    const data = new Uint8Array(new TextEncoder().encode(str));
-    const len = data.length;
+export function murmur3_32(str: string, h: number = 0x12345678): number {
+    const len = str.length;
     const nBlocks = len >> 2; // len / 4
 
     // 处理4字节块
-    for (let i = 0; i < nBlocks; i++) {
-        const start = i << 2;
-        k1[0] = (
-            (data[start] & 0xff) |
-            ((data[start + 1] & 0xff) << 8) |
-            ((data[start + 2] & 0xff) << 16) |
-            ((data[start + 3] & 0xff) << 24)
-        );
+    let i = 0;
+    while (i < nBlocks) {
+        let k1 =
+            ((str.charCodeAt(i) & 0xff)) |
+            ((str.charCodeAt(++i) & 0xff) << 8) |
+            ((str.charCodeAt(++i) & 0xff) << 16) |
+            ((str.charCodeAt(++i) & 0xff) << 24);
+        ++i;
 
-        // 混合函数
-        k1[0] *= 0xcc9e2d51;
-        k1[0] = (k1[0] << 15) | (k1[0] >>> 17); // ROTL32(k1,15)
-        k1[0] *= 0x1b873593;
+        // 混合函数，使用与库实现相同的32位溢出处理
+        k1 = ((((k1 & 0xffff) * 0xcc9e2d51) + ((((k1 >>> 16) * 0xcc9e2d51) & 0xffff) << 16))) & 0xffffffff;
+        k1 = (k1 << 15) | (k1 >>> 17);
+        k1 = ((((k1 & 0xffff) * 0x1b873593) + ((((k1 >>> 16) * 0x1b873593) & 0xffff) << 16))) & 0xffffffff;
 
-        h ^= k1[0];
-        h = (h << 13) | (h >>> 19); // ROTL32(h,13)
-        h = h * 5 + 0xe6546b64;
+        h ^= k1;
+        h = (h << 13) | (h >>> 19);
+        h = ((((h & 0xffff) * 5) + ((((h >>> 16) * 5) & 0xffff) << 16))) & 0xffffffff;
+        h = (((h & 0xffff) + 0x6b64) + ((((h >>> 16) + 0xe654) & 0xffff) << 16));
     }
 
     // 处理剩余字节
-    k1[0] = 0;
-    const tailStart = nBlocks << 2;
-    switch (len & 3) { // len % 4
-        case 3:
-            k1[0] ^= (data[tailStart + 2] & 0xff) << 16;
-            // falls through - 故意的fallthrough，用于处理剩余字节
-        case 2:
-            k1[0] ^= (data[tailStart + 1] & 0xff) << 8;
-            // falls through - 故意的fallthrough，用于处理剩余字节
-        case 1:
-            k1[0] ^= (data[tailStart] & 0xff);
-            k1[0] *= 0xcc9e2d51;
-            k1[0] = (k1[0] << 15) | (k1[0] >>> 17); // ROTL32(k1,15)
-            k1[0] *= 0x1b873593;
-            h ^= k1[0];
+    let k1 = 0;
+    const remainder = len & 3; // len % 4
+    if (remainder > 0) {
+        if (remainder >= 3) k1 ^= (str.charCodeAt(i + 2) & 0xff) << 16;
+        if (remainder >= 2) k1 ^= (str.charCodeAt(i + 1) & 0xff) << 8;
+        if (remainder >= 1) k1 ^= (str.charCodeAt(i) & 0xff);
+
+        k1 = (((k1 & 0xffff) * 0xcc9e2d51) + ((((k1 >>> 16) * 0xcc9e2d51) & 0xffff) << 16)) & 0xffffffff;
+        k1 = (k1 << 15) | (k1 >>> 17);
+        k1 = (((k1 & 0xffff) * 0x1b873593) + ((((k1 >>> 16) * 0x1b873593) & 0xffff) << 16)) & 0xffffffff;
+        h ^= k1;
     }
 
     // 终结处理
     h ^= len;
     h ^= h >>> 16;
-    h *= 0x85ebca6b;
+    h = (((h & 0xffff) * 0x85ebca6b) + ((((h >>> 16) * 0x85ebca6b) & 0xffff) << 16)) & 0xffffffff;
     h ^= h >>> 13;
-    h *= 0xc2b2ae35;
+    h = ((((h & 0xffff) * 0xc2b2ae35) + ((((h >>> 16) * 0xc2b2ae35) & 0xffff) << 16))) & 0xffffffff;
     h ^= h >>> 16;
 
     return h >>> 0;
