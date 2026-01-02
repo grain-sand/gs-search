@@ -66,7 +66,6 @@ export class IndexSegment {
 
         const buffer = new ArrayBuffer(totalSize);
         const view = new DataView(buffer);
-        const uint8 = new Uint8Array(buffer);
 
         view.setUint32(0, 0x494E4458);
         view.setUint32(4, sortedHashes.length);

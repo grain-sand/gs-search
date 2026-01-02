@@ -42,8 +42,10 @@ export function murmur3_32(str: string, seed: number = 0x12345678): number {
     switch (len & 3) { // len % 4
         case 3:
             k1[0] ^= (data[tailStart + 2] & 0xff) << 16;
+            // falls through - 故意的fallthrough，用于处理剩余字节
         case 2:
             k1[0] ^= (data[tailStart + 1] & 0xff) << 8;
+            // falls through - 故意的fallthrough，用于处理剩余字节
         case 1:
             k1[0] ^= (data[tailStart] & 0xff);
             k1[0] *= 0xcc9e2d51;
