@@ -23,7 +23,6 @@
 	  "ES2022",
 	  "DOM",
 	],
-	"types": ["node"],
 	"allowJs": true,
 	"allowSyntheticDefaultImports": true,
 	"resolveJsonModule": true,

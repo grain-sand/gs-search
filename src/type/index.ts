@@ -1,7 +1,9 @@
-export { IDocument, IDocumentBase } from './IDocument';
-export { IResult } from './IResult';
-export { ISegmentMeta } from './ISegmentMeta';
-export { IIndexMeta } from './IIndexMeta';
-export { ITokenizedDoc } from './ITokenizedDoc';
-export { ISearchEngineConfig, IndexType } from './ISearchEngineConfig';
-export { IStorage } from './IStorage';
+export * from './IDocument';
+export * from './IResult';
+export * from './ISegmentMeta';
+export * from './IIndexMeta';
+export * from './ITokenizedDoc';
+export * from './ISearchEngineConfig';
+export * from './IStorage';
+
+export const _ = '';

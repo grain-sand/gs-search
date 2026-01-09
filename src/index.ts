@@ -1,6 +1,17 @@
-export * from './type';
-export { SearchEngine } from './core/SearchEngine';
-export { SimpleSearch } from './simple/SimpleSearch';
-export { BrowserStorage } from './browser';
-export { NodeStorage } from './node';
-export { hash, murmur3_32 } from './core/Hash';
+// 导出类型定义
+export type {
+	IDocument,
+	IDocumentBase,
+	IResult,
+	ITokenizedDoc,
+	ISearchEngineConfig,
+	IndexType,
+	IStorage,
+	ISegmentMeta,
+	IIndexMeta
+} from './type';
+
+export * from './core';
+export * from './simple/SimpleSearch';
+export * from './browser';
+export * from './node';

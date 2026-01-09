@@ -1,1 +1,1 @@
-export { BrowserStorage } from './BrowserStorage';
+export * from './BrowserStorage';

@@ -1,1 +1,1 @@
-export { NodeStorage } from './NodeStorage';
+export * from './NodeStorage';

@@ -1,4 +1,4 @@
-import {SearchEngine} from '../core/SearchEngine';
+import {SearchEngine} from '../core';
 import {IDocument, IDocumentBase, ISearchEngineConfig} from '../type';
 
 /**
