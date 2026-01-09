@@ -1,0 +1,1 @@
+export { BrowserStorage } from './BrowserStorage';

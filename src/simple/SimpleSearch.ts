@@ -1,5 +1,5 @@
 import {SearchEngine} from '../core/SearchEngine';
-import {IDocument, IDocumentBase, ISearchEngineConfig} from '../core/Types';
+import {IDocument, IDocumentBase, ISearchEngineConfig} from '../type';
 
 /**
  * 快速使用封装

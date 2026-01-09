@@ -1,4 +1,4 @@
-import { ITokenizedDoc, IStorage } from './Types';
+import { ITokenizedDoc, IStorage } from '../type';
 import { hash } from './Hash';
 
 export class IndexSegment {

@@ -1,8 +1,9 @@
-import { BrowserStorage, NodeStorage } from './Storage';
+import { BrowserStorage } from '../browser';
+import { NodeStorage } from '../node';
 import { MetaManager } from './MetaManager';
 import { IntermediateCache } from './IntermediateCache';
 import { IndexSegment } from './IndexSegment';
-import { IDocument, IDocumentBase, IResult, ITokenizedDoc, ISearchEngineConfig, IndexType, IStorage } from './Types';
+import { IDocument, IDocumentBase, IResult, ITokenizedDoc, ISearchEngineConfig, IndexType, IStorage } from '../type';
 
 const WORD_CACHE_FILE = 'word_cache.bin';
 const CHAR_CACHE_FILE = 'char_cache.bin';

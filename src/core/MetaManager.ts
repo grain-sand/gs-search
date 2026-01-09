@@ -1,4 +1,4 @@
-import { IIndexMeta, IndexType, ISegmentMeta, IStorage } from './Types';
+import { IIndexMeta, IndexType, ISegmentMeta, IStorage } from '../type';
 
 const META_FILE = 'search_meta.json';
 const DELETED_IDS_FILE = 'deleted_ids.bin';

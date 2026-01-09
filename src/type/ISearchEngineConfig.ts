@@ -1,59 +1,17 @@
 /**
- * 核心类型定义
+ * 索引类型
  */
-
-export interface IDocumentBase {
-    text: string;
-}
-
-export interface IDocument extends IDocumentBase {
-    id: number;
-}
-
-export interface IResult {
-    id: number;
-    score: number;
-    tokens: string[];
-}
-
-export interface ISegmentMeta {
-    filename: string;
-    start: number; // Cache 中的起始字节位置
-    end: number;   // Cache 中的结束字节位置
-    tokenCount: number;
-}
-
-export interface IIndexMeta {
-    wordSegments: ISegmentMeta[];
-    charSegments: ISegmentMeta[];
-}
-
-export interface ITokenizedDoc {
-    id: number;
-    tokens: string[];
-}
-
 export type IndexType = 'word' | 'char';
-
-/**
- * 存储层接口 (外部化)
- */
-export interface IStorage {
-    write(filename: string, data: ArrayBuffer): Promise<void>;
-    append(filename: string, data: ArrayBuffer): Promise<void>;
-    read(filename: string): Promise<ArrayBuffer | null>;
-    readRange(filename: string, start: number, end: number): Promise<ArrayBuffer | null>;
-    remove(filename: string): Promise<void>;
-    listFiles(): Promise<string[]>;
-    clearAll(): Promise<void>;
-    getFileSize(filename: string): Promise<number>;
-}
 
 /**
  * 核心搜索引擎配置
  */
+import { IDocument, IDocumentBase } from './IDocument';
+import { IStorage } from './IStorage';
+
 export interface ISearchEngineConfig {
-    /** * 数据存储的基础目录 (必填)
+    /**
+     * 数据存储的基础目录 (必填)
      * 用于区分不同的搜索引擎实例
      */
     baseDir: string;

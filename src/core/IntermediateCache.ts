@@ -1,5 +1,4 @@
-import { IStorage } from './Types';
-import { ITokenizedDoc } from './Types';
+import { IStorage, ITokenizedDoc } from '../type';
 
 export class IntermediateCache {
     static readonly SEPARATOR = 0x1E;
