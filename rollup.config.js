@@ -26,7 +26,7 @@ const regexReplace = (patterns) => ({
 });
 
 const external = (id) => {
-	return id.includes('/browser') || id.includes('/core') || id.includes('/type')|| id.includes('/node');
+	return id.includes('/browser') || id.includes('/core') || id.includes('/type') || id.includes('/node') || id.includes('/simple');
 };
 
 const tsConfig = {
@@ -36,8 +36,11 @@ const tsConfig = {
 
 // const aliasIns = alias({entries: {find: '../core', replacement: './core'}});
 const replace = regexReplace([
-	{find: /(['"])(?:[.]+\/)+(browser|node|type|core)\1/g, replacement: `'./$2'`},
-	{find: /export\s*\{\s*_\s*};\n|exports._="";|const\s*o="";export{o\s*as _};\n|declare\s*const\s*_\s*=\s*"";/g, replacement: ''},
+	{find: /(['"])(?:[.]+\/)+(browser|node|type|core|simple)\1/g, replacement: `'./$2'`},
+	{
+		find: /export\s*\{\s*_\s*};\n|exports._="";|const\s*o="";export{o\s*as _};\n|declare\s*const\s*_\s*=\s*"";/g,
+		replacement: ''
+	},
 ]);
 
 const defaultPlugins = [
@@ -51,7 +54,7 @@ const defaultPlugins = [
 	replace
 ];
 
-function createConfig(output, plugins=defaultPlugins, input) {
+function createConfig(output, plugins = defaultPlugins, input) {
 	input || (input = `src/${output}/index.ts`)
 	const ts = {
 		input,
@@ -103,5 +106,6 @@ export default [
 	...createConfig('node'),
 	...createConfig('core'),
 	...createConfig('browser'),
-	...createConfig('index',mainConfigJsPlugins,'src/index.ts'),
+	...createConfig('simple'),
+	...createConfig('index', mainConfigJsPlugins, 'src/index.ts'),
 ];

@@ -9,6 +9,31 @@
       "import": "./lib/index.js",
       "require": "./lib/index.cjs",
       "types": "./lib/index.d.ts"
+    },
+    "./browser": {
+      "import": "./lib/browser.js",
+      "require": "./lib/browser.cjs",
+      "types": "./lib/browser.d.ts"
+    },
+    "./core": {
+      "import": "./lib/core.js",
+      "require": "./lib/core.cjs",
+      "types": "./lib/core.d.ts"
+    },
+    "./node": {
+      "import": "./lib/node.js",
+      "require": "./lib/node.cjs",
+      "types": "./lib/node.d.ts"
+    },
+    "./simple": {
+      "import": "./lib/simple.js",
+      "require": "./lib/simple.cjs",
+      "types": "./lib/simple.d.ts"
+    },
+    "./type": {
+      "import": "./lib/type.js",
+      "require": "./lib/type.cjs",
+      "types": "./lib/type.d.ts"
     }
   },
   "types": "lib/index.d.ts",

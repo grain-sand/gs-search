@@ -1,5 +1,5 @@
 {
-  "name": "gs-search",
+  "name": "gs-search-dev",
   "private": true,
   "scripts": {
 	"test": "vitest run --browser.enabled=false",
