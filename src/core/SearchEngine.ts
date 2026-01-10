@@ -1,5 +1,3 @@
-import {BrowserStorage} from '../browser';
-import {NodeStorage} from '../node';
 import {MetaManager} from './MetaManager';
 import {IntermediateCache} from './IntermediateCache';
 import {IndexSegment} from './IndexSegment';
@@ -9,7 +7,7 @@ import {
 	IndexType,
 	IResult,
 	ISearchEngine,
-	ISearchEngineConfig,
+	ISearchEngineOption,
 	ISearchEngineStatus,
 	IStorage,
 	ITokenizedDoc
@@ -27,16 +25,13 @@ export class SearchEngine implements ISearchEngine {
 	#cache: IntermediateCache;
 	#segments: Map<string, IndexSegment>;
 	#initialized: boolean = false;
-	#config: ISearchEngineConfig;
+	#config: ISearchEngineOption;
 
 	// 批处理状态
 	#inBatch: boolean = false;
 	#pendingTokenCounts: { word: number, char: number } = {word: 0, char: 0};
 
-	constructor(config: ISearchEngineConfig) {
-		if (!config.baseDir) {
-			throw new Error("SearchEngine requires 'baseDir' in config.");
-		}
+	constructor(config: ISearchEngineOption) {
 		this.#config = {
 			wordSegmentTokenThreshold: 100000,
 			charSegmentTokenThreshold: 500000,
@@ -53,32 +48,7 @@ export class SearchEngine implements ISearchEngine {
 			throw new Error("minCharTokenSave must be less than charSegmentTokenThreshold");
 		}
 
-		if (!this.#config.storage) {
-			// noinspection SuspiciousTypeOfGuard
-			if (typeof navigator !== 'undefined' && navigator?.storage?.getDirectory instanceof Function) {
-				this.#config.storage = 'browser';
-			} else {
-				this.#config.storage = 'node';
-			}
-		}
-
-		// 【升级】存储层配置逻辑
-		// 优先级：配置对象(IStorage) > 配置字符串('browser'|'node') > 自动环境检测
-		let storageImpl: IStorage | null = null;
-		if (typeof this.#config.storage === 'object') {
-			storageImpl = this.#config.storage;
-		} else if (this.#config.storage === 'browser') {
-			storageImpl = new BrowserStorage(this.#config.baseDir);
-		} else if (this.#config.storage === 'node') {
-			storageImpl = new NodeStorage(this.#config.baseDir);
-		}
-
-		// 如果仍未获取到实现，抛出异常
-		if (!storageImpl) {
-			throw new Error('Storage initialization failed. Please configure "storage" explicitly or ensure you are in a supported environment (Browser/Node).');
-		}
-
-		this.#storage = storageImpl;
+		this.#storage = config.storage;
 
 		// 依赖注入
 		this.#meta = new MetaManager(this.#storage);

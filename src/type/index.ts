@@ -3,7 +3,7 @@ export * from './IResult';
 export * from './ISegmentMeta';
 export * from './IIndexMeta';
 export * from './ITokenizedDoc';
-export * from './ISearchEngineConfig';
+export * from './ISearchEngineOption';
 export * from './IStorage';
 export * from './ISearchEngine';
 

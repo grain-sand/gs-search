@@ -12,12 +12,12 @@ import {IStorage} from './IStorage';
 export type IndexingTokenizer = <T extends IDocument = IDocument>(doc: T) => string[];
 export type SearchTokenizer = <T extends IDocumentBase = IDocumentBase>(doc: T) => string[];
 
-export interface ISearchEngineConfig {
-	/**
-	 * 数据存储的基础目录 (必填)
-	 * 用于区分不同的搜索引擎实例
-	 */
-	baseDir: string;
+export interface ISearchEngineOption {
+	// /**
+	//  * 数据存储的基础目录 (必填)
+	//  * 用于区分不同的搜索引擎实例
+	//  */
+	// baseDir: string;
 
 	/**
 	 * 存储实现配置 (可选)
@@ -26,7 +26,7 @@ export interface ISearchEngineConfig {
 	 * - IStorage: 传入自定义的存储实例
 	 * - undefined: 自动检测环境
 	 */
-	storage?: 'browser' | 'node' | IStorage;
+	storage: IStorage;
 
 	/**
 	 * 索引时使用的分词器 (算法核心配置)
