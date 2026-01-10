@@ -3,7 +3,17 @@ import {NodeStorage} from '../node';
 import {MetaManager} from './MetaManager';
 import {IntermediateCache} from './IntermediateCache';
 import {IndexSegment} from './IndexSegment';
-import {IDocument, IDocumentBase, IResult, ITokenizedDoc, ISearchEngineConfig, IndexType, IStorage} from '../type';
+import {
+	IDocument,
+	IDocumentBase,
+	IndexType,
+	IResult,
+	ISearchEngine,
+	ISearchEngineConfig,
+	ISearchEngineStatus,
+	IStorage,
+	ITokenizedDoc
+} from '../type';
 
 const WORD_CACHE_FILE = 'word_cache.bin';
 const CHAR_CACHE_FILE = 'char_cache.bin';
@@ -11,7 +21,7 @@ const CHAR_CACHE_FILE = 'char_cache.bin';
 /**
  * 核心搜索引擎类 (多实例支持)
  */
-export class SearchEngine {
+export class SearchEngine implements ISearchEngine {
 	#storage: IStorage;
 	#meta: MetaManager;
 	#cache: IntermediateCache;
@@ -381,7 +391,7 @@ export class SearchEngine {
 		this.#pendingTokenCounts = {word: 0, char: 0};
 	}
 
-	async getStatus() {
+	async getStatus(): Promise<ISearchEngineStatus> {
 		if (!this.#initialized) await this.init();
 		return {
 			wordSegments: this.#meta.getSegments('word').length,
@@ -392,6 +402,8 @@ export class SearchEngine {
 			inBatch: this.#inBatch
 		};
 	}
+
+
 
 	/**
 	 * 检查文档ID是否曾经添加过（包括已删除的）

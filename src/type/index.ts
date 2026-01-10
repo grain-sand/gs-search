@@ -5,5 +5,6 @@ export * from './IIndexMeta';
 export * from './ITokenizedDoc';
 export * from './ISearchEngineConfig';
 export * from './IStorage';
+export * from './ISearchEngine';
 
 export const _ = '';
