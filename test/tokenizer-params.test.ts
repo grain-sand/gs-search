@@ -52,7 +52,6 @@ describe('Tokenizer Parameters', () => {
       author: 'test-author'
     };
 
-    await customEngine.init();
     await customEngine.addDocument(testDoc);
 
     expect(capturedDocuments.length).toBe(1);
@@ -98,7 +97,6 @@ describe('Tokenizer Parameters', () => {
       }
     ];
 
-    await customEngine.init();
     await customEngine.addDocuments(testDocs);
 
     expect(capturedDocuments.length).toBe(2);
@@ -177,7 +175,7 @@ describe('Tokenizer Parameters', () => {
         console.error('Failed to clear engine data:', e);
       }
     }
-    
+
     // 清理所有MockStorage实例
     for (const storage of mockStorages) {
       try {

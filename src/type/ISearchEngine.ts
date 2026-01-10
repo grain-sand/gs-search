@@ -14,9 +14,6 @@ export interface ISearchEngineStatus {
  * 核心搜索引擎
  */
 export interface ISearchEngine {
-
-	init(): Promise<void>;
-
 	/**
 	 * 开启批处理
 	 * 批处理期间 addDocuments 只写入缓存，不触发索引段构建

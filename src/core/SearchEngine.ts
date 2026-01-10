@@ -12,6 +12,7 @@ import {
 	IStorage,
 	ITokenizedDoc
 } from '../type';
+import {defaultTokenize} from "./defaultTokenize";
 
 const WORD_CACHE_FILE = 'word_cache.bin';
 const CHAR_CACHE_FILE = 'char_cache.bin';
@@ -20,6 +21,7 @@ const CHAR_CACHE_FILE = 'char_cache.bin';
  * 核心搜索引擎类 (多实例支持)
  */
 export class SearchEngine implements ISearchEngine {
+
 	#storage: IStorage;
 	#meta: MetaManager;
 	#cache: IntermediateCache;
@@ -37,6 +39,7 @@ export class SearchEngine implements ISearchEngine {
 			charSegmentTokenThreshold: 500000,
 			minWordTokenSave: 0,
 			minCharTokenSave: 0,
+			indexingTokenizer: config.indexingTokenizer || defaultTokenize,
 			...config
 		};
 
@@ -54,26 +57,6 @@ export class SearchEngine implements ISearchEngine {
 		this.#meta = new MetaManager(this.#storage);
 		this.#cache = new IntermediateCache(this.#storage);
 		this.#segments = new Map();
-	}
-
-	async init() {
-		if (this.#initialized) return;
-		await this.#meta.load();
-
-		const allSegments = [
-			...this.#meta.getSegments('word'),
-			...this.#meta.getSegments('char')
-		];
-
-		// 预加载所有相关的索引段并加载数据
-		for (const seg of allSegments) {
-			if (!this.#segments.has(seg.filename)) {
-				this.#segments.set(seg.filename, new IndexSegment(seg.filename, this.#storage));
-			}
-			// 确保索引段已加载数据
-			await this.#segments.get(seg.filename)!.loadIndex();
-		}
-		this.#initialized = true;
 	}
 
 	/**
@@ -121,7 +104,7 @@ export class SearchEngine implements ISearchEngine {
 	 * 用于在批量添加中途出错后的恢复添加行为，也可直接用于批量添加
 	 */
 	async addDocumentsIfMissing<T extends IDocument = IDocument>(docs: T[]): Promise<void> {
-		if (!this.#initialized) await this.init();
+		if (!this.#initialized) await this.#init();
 		if (docs.length === 0) return;
 
 		const deletedIds = this.#meta.getDeletedIds();
@@ -192,7 +175,7 @@ export class SearchEngine implements ISearchEngine {
 	}
 
 	async addDocuments<T extends IDocument = IDocument>(docs: T[]): Promise<void> {
-		if (!this.#initialized) await this.init();
+		if (!this.#initialized) await this.#init();
 		if (docs.length === 0) return;
 
 		const deletedIds = this.#meta.getDeletedIds();
@@ -257,11 +240,11 @@ export class SearchEngine implements ISearchEngine {
 		}
 	}
 
-	async search<T extends IDocumentBase|string = any>(query: T, limit?: number): Promise<IResult[]> {
-		if (!this.#initialized) await this.init();
+	async search<T extends IDocumentBase | string = any>(query: T, limit?: number): Promise<IResult[]> {
+		if (!this.#initialized) await this.#init();
 
 		// Convert string query to IDocumentBase
-		const queryDoc = typeof query === 'string' ? {text: query} : query;
+		const queryDoc = (typeof query === 'string' ? {text: query} : query) as IDocumentBase;
 		const rawTokens = this.#getSearchTokens(queryDoc);
 		const wordTerms = rawTokens.filter(t => t.length > 1);
 		const charTerms = rawTokens.filter(t => t.length === 1);
@@ -346,7 +329,7 @@ export class SearchEngine implements ISearchEngine {
 	}
 
 	async removeDocument(id: number): Promise<void> {
-		if (!this.#initialized) await this.init();
+		if (!this.#initialized) await this.#init();
 		this.#meta.addDeletedId(id);
 		this.#meta.removeAddedId(id);
 		await this.#meta.save();
@@ -362,7 +345,7 @@ export class SearchEngine implements ISearchEngine {
 	}
 
 	async getStatus(): Promise<ISearchEngineStatus> {
-		if (!this.#initialized) await this.init();
+		if (!this.#initialized) await this.#init();
 		return {
 			wordSegments: this.#meta.getSegments('word').length,
 			charSegments: this.#meta.getSegments('char').length,
@@ -373,43 +356,38 @@ export class SearchEngine implements ISearchEngine {
 		};
 	}
 
-
 	/**
 	 * 检查文档ID是否曾经添加过（包括已删除的）
 	 * @param id 文档ID
 	 * @returns 文档是否曾经添加过的布尔值
 	 */
 	async hasDocument(id: number): Promise<boolean> {
-		if (!this.#initialized) await this.init();
+		if (!this.#initialized) await this.#init();
 		return this.#meta.hasDocument(id);
 	}
 
-	#defaultTokenize(text: string): string[] {
-		try {
-			// 检查Intl.Segmenter是否可用且支持所需的功能
-			if (typeof Intl !== 'undefined' &&
-				typeof Intl.Segmenter === 'function' &&
-				typeof Array.from === 'function') {
-				const segmenter = new Intl.Segmenter([], {granularity: 'word'});
-				const segments = segmenter.segment(text);
-				if (typeof segments === 'object' && segments !== null) {
-					return Array.from(segments)
-						.filter((s: any) => s?.isWordLike)
-						.map((s: any) => s?.segment?.toLowerCase() || '');
-				}
+	async #init() {
+		if (this.#initialized) return;
+		await this.#meta.load();
+
+		const allSegments = [
+			...this.#meta.getSegments('word'),
+			...this.#meta.getSegments('char')
+		];
+
+		// 预加载所有相关的索引段并加载数据
+		for (const seg of allSegments) {
+			if (!this.#segments.has(seg.filename)) {
+				this.#segments.set(seg.filename, new IndexSegment(seg.filename, this.#storage));
 			}
-		} catch (e) {
-			// 忽略任何Intl.Segmenter相关的错误，回退到基本分词
+			// 确保索引段已加载数据
+			await this.#segments.get(seg.filename)!.loadIndex();
 		}
-		// 基本分词逻辑，确保在所有环境下都能工作
-		return text.toLowerCase().split(/[^a-z0-9\u4e00-\u9fa5]+/g).filter(t => t.length > 0);
+		this.#initialized = true;
 	}
 
 	#getIndexingTokens<T extends IDocument = IDocument>(doc: T): string[] {
-		if (this.#config.indexingTokenizer) {
-			return this.#config.indexingTokenizer(doc);
-		}
-		return this.#defaultTokenize(doc.text);
+		return this.#config.indexingTokenizer!(doc);
 	}
 
 	#getSearchTokens<T extends IDocumentBase = IDocumentBase>(doc: T): string[] {
