@@ -3,18 +3,16 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { SearchEngine } from '../src';
 import { MockStorage } from './common/storage';
-import { getTestBaseDir, cleanupTestDirs } from './common/utils';
 
 describe('Min Token Save Configuration', () => {
-	// 清理测试目录
+	// 使用MockStorage不需要清理测试目录
 	afterAll(async () => {
-		await cleanupTestDirs(['min-save']);
+		// 清理工作由MockStorage自动处理
 	});
 
 	it('should respect minWordTokenSave threshold', async () => {
 		const mockStorage = new MockStorage();
 		const engine = new SearchEngine({
-			baseDir: getTestBaseDir('min-save'),
 			storage: mockStorage,
 			minWordTokenSave: 5, // 设置最小保存阈值为5
 			// 确保token长度大于1，这样会被归类为wordTokens
@@ -37,7 +35,6 @@ describe('Min Token Save Configuration', () => {
 	it('should respect minCharTokenSave threshold', async () => {
 		const mockStorage = new MockStorage();
 		const engine = new SearchEngine({
-			baseDir: getTestBaseDir('min-save'),
 			storage: mockStorage,
 			minCharTokenSave: 5, // 设置最小保存阈值为5
 			indexingTokenizer: (doc) => doc.text.split('').filter(char => char.trim() !== '')

@@ -68,7 +68,7 @@ export class SimpleSearch {
 		return this.#getInstance().addDocumentsIfMissing(docs);
 	}
 
-	static async search<T extends IDocumentBase = IDocumentBase>(query: T | string, limit?: number) {
+	static async search<T extends IDocumentBase = any>(query: T | string, limit?: number) {
 		return this.#getInstance().search(query, limit);
 	}
 

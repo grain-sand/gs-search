@@ -2,17 +2,18 @@
 
 import {afterAll, describe, expect, it} from 'vitest';
 import {SearchEngine} from '../src';
-import {cleanupTestDirs, getTestBaseDir} from './common/utils';
+import {MockStorage} from './common/storage';
 
 describe('Tokenizer Configuration', () => {
-	// 清理测试目录
+	// 使用MockStorage不需要清理测试目录
 	afterAll(async () => {
-		await cleanupTestDirs(['tokenizer']);
+		// 清理工作由MockStorage自动处理
 	});
 
 	it('should support separate indexing and search tokenizers', async () => {
+		const mockStorage = new MockStorage();
 		const customEngine = new SearchEngine({
-			baseDir: getTestBaseDir('tokenizer') + '_custom',
+			storage: mockStorage,
 			indexingTokenizer: (doc) => doc.text.split(' '),
 			searchTokenizer: (doc) => doc.text.split(',')
 		});

@@ -3,18 +3,16 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { SearchEngine } from '../src';
 import { MockStorage } from './common/storage';
-import { getTestBaseDir, cleanupTestDirs } from './common/utils';
 
 describe('Segment Threshold Configuration', () => {
-	// 清理测试目录
+	// 使用MockStorage不需要清理测试目录
 	afterAll(async () => {
-		await cleanupTestDirs(['threshold', 'word-threshold', 'char-threshold']);
+		// 清理工作由MockStorage自动处理
 	});
 
 	it('should respect wordSegmentTokenThreshold', async () => {
 		// 测试单词索引的分段阈值
 		const mockStorage = new MockStorage();
-		const baseDir = getTestBaseDir('word-threshold');
 
 		// 使用状态化的分词器，确保每次调用返回固定数量的token
 		let tokenizerCalls = 0;
@@ -25,11 +23,10 @@ describe('Segment Threshold Configuration', () => {
 		};
 
 		const engine = new SearchEngine({
-			baseDir,
 			storage: mockStorage,
 			wordSegmentTokenThreshold: 5, // 设置较小的阈值
 			minWordTokenSave: 0,
-			indexingTokenizer: customTokenizer
+			indexingTokenizer: customTokenizer as any
 		});
 
 		// 添加第一个文档 (3个token)
@@ -53,7 +50,6 @@ describe('Segment Threshold Configuration', () => {
 	it('should respect charSegmentTokenThreshold', async () => {
 		// 测试字符索引的分段阈值
 		const mockStorage = new MockStorage();
-		const baseDir = getTestBaseDir('char-threshold');
 
 		// 跟踪分词器调用次数和返回的token
 		let tokenizerCalls = 0;
@@ -64,11 +60,10 @@ describe('Segment Threshold Configuration', () => {
 		};
 
 		const engine = new SearchEngine({
-			baseDir,
 			storage: mockStorage,
 			charSegmentTokenThreshold: 5,
 			minCharTokenSave: 0,
-			indexingTokenizer: customTokenizer
+			indexingTokenizer: customTokenizer as any
 		});
 
 		// 添加第一个文档 (3个token)

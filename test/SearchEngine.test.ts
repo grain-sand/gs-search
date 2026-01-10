@@ -2,48 +2,23 @@
 
 import {afterAll, beforeEach, describe, expect, it} from 'vitest';
 import {SearchEngine} from '../src';
-
-function getTestBaseDir() {
-	let workerId = '0';
-	if (typeof process !== 'undefined' && process.env) {
-		workerId = process.env.VITEST_POOL_ID || process.env.JEST_WORKER_ID || '0';
-	}
-	return `core_test_data_${workerId}`;
-}
-
-
+import {MockStorage} from './common/storage';
 
 describe('SearchEngine', () => {
 	let engine: SearchEngine;
+	let mockStorage: MockStorage;
 
 	beforeEach(async () => {
+		mockStorage = new MockStorage();
 		engine = new SearchEngine({
-			baseDir: getTestBaseDir(),
+			storage: mockStorage,
 			wordSegmentTokenThreshold: 50
 		});
 		await engine.clearAll();
 	});
 
 	afterAll(async () => {
-		const base = getTestBaseDir();
-		const dirsToClean = [base, base + '_node', base + '_custom'];
-		// 仅在 Node.js 环境中执行清理
-		if (typeof process !== 'undefined' && process.versions && process.versions.node) {
-			try{
-				const fs = await import('node:fs');
-				dirsToClean.forEach(d => {
-					if (fs.existsSync(d)) {
-						try {
-							fs.rmSync(d, {recursive: true, force: true});
-						} catch (e) {
-							console.error(`Failed to cleanup test dir ${d}:`, e);
-						}
-					}
-				});
-			} catch (e:any) {
-				// Ignore errors in non-Node environments
-			}
-		}
+		// 使用MockStorage不需要清理文件系统
 	});
 
 

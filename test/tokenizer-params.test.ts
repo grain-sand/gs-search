@@ -2,26 +2,25 @@
 
 import {afterAll, beforeEach, describe, expect, it} from 'vitest';
 import {IDocument, IDocumentBase, SearchEngine} from '../src';
-
-function getTestBaseDir() {
-  let workerId = '0';
-  // 检查是否为浏览器环境
-  const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
-  
-  if (!isBrowser && typeof process !== 'undefined' && process.env) {
-    workerId = process.env.VITEST_POOL_ID || process.env.JEST_WORKER_ID || '0';
-  }
-  return `tokenizer_params_test_${workerId}`;
-}
+import {MockStorage} from './common/storage';
 
 describe('Tokenizer Parameters', () => {
   let engine: SearchEngine;
-  // 保存所有创建的SearchEngine实例，用于浏览器环境清理
+  // 保存所有创建的SearchEngine实例，用于清理
   const enginesToClean: SearchEngine[] = [];
+  // 保存所有创建的MockStorage实例，用于清理
+  const mockStorages: MockStorage[] = [];
+
+  // 创建MockStorage实例的辅助函数
+  const createMockStorage = () => {
+    const storage = new MockStorage();
+    mockStorages.push(storage);
+    return storage;
+  };
 
   beforeEach(() => {
     engine = new SearchEngine({
-      baseDir: getTestBaseDir(),
+      storage: createMockStorage(),
     });
     enginesToClean.push(engine);
   });
@@ -36,7 +35,7 @@ describe('Tokenizer Parameters', () => {
 
     // 创建一个新的engine实例，配置自定义的indexingTokenizer
     const customEngine = new SearchEngine({
-      baseDir: getTestBaseDir() + '_1',
+      storage: createMockStorage(),
       indexingTokenizer: (doc: CustomDocument) => {
         capturedDocuments.push(doc);
         return doc.text.split(' ');
@@ -74,7 +73,7 @@ describe('Tokenizer Parameters', () => {
 
     // 创建一个新的engine实例，配置自定义的indexingTokenizer
     const customEngine = new SearchEngine({
-      baseDir: getTestBaseDir() + '_2',
+      storage: createMockStorage(),
       indexingTokenizer: (doc: CustomDocument) => {
         capturedDocuments.push(doc);
         return doc.text.split(' ');
@@ -122,7 +121,7 @@ describe('Tokenizer Parameters', () => {
 
     // 创建一个新的engine实例，配置自定义的indexingTokenizer和searchTokenizer
     const customEngine = new SearchEngine({
-      baseDir: getTestBaseDir() + '_3',
+      storage: createMockStorage(),
       indexingTokenizer: (doc) => doc.text.split(' '),
       searchTokenizer: (query: CustomSearchDoc) => {
         capturedQueries.push(query);
@@ -153,7 +152,7 @@ describe('Tokenizer Parameters', () => {
 
     // 创建一个新的engine实例，配置自定义的indexingTokenizer和searchTokenizer
     const customEngine = new SearchEngine({
-      baseDir: getTestBaseDir() + '_4',
+      storage: createMockStorage(),
       indexingTokenizer: (doc) => doc.text.split(' '),
       searchTokenizer: (query: IDocumentBase) => {
         capturedQueries.push(query);
@@ -179,24 +178,12 @@ describe('Tokenizer Parameters', () => {
       }
     }
     
-    const base = getTestBaseDir();
-    const dirsToClean = [base, base + '_1', base + '_2', base + '_3', base + '_4'];
-    // 仅在 Node.js 环境中执行文件系统清理
-    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    // 清理所有MockStorage实例
+    for (const storage of mockStorages) {
       try {
-        const fs = await import('node:fs');
-        dirsToClean.forEach(d => {
-          if (fs.existsSync(d)) {
-            try {
-              fs.rmSync(d, { recursive: true, force: true });
-            }
-            catch (e) {
-              console.error(`Failed to cleanup test dir ${d}:`, e);
-            }
-          }
-        });
+        await storage.clearAll();
       } catch (e) {
-        // Ignore errors in non-Node environments
+        console.error('Failed to clear MockStorage:', e);
       }
     }
   });

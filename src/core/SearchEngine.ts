@@ -257,7 +257,7 @@ export class SearchEngine implements ISearchEngine {
 		}
 	}
 
-	async search<T extends IDocumentBase = IDocumentBase>(query: T | string, limit?: number): Promise<IResult[]> {
+	async search<T extends IDocumentBase|string = any>(query: T, limit?: number): Promise<IResult[]> {
 		if (!this.#initialized) await this.init();
 
 		// Convert string query to IDocumentBase
@@ -372,7 +372,6 @@ export class SearchEngine implements ISearchEngine {
 			inBatch: this.#inBatch
 		};
 	}
-
 
 
 	/**

@@ -2,21 +2,17 @@
 
 import {beforeEach, describe, expect, it, afterAll} from 'vitest';
 import {SimpleSearch} from '../src';
-
-const baseDir = 'simple_test_data'
+import {MockStorage} from './common/storage';
 
 describe('SimpleSearch (Facade)', () => {
 	beforeEach(async () => {
-		SimpleSearch.configure({baseDir});
+		// 使用MockStorage进行测试，避免文件系统操作
+		SimpleSearch.configure({storage: new MockStorage()});
 		await SimpleSearch.clearAll();
 	});
 
 	afterAll(async () => {
-		try {
-			const fs = await import('node:fs');
-			fs.rmSync(baseDir, {recursive: true, force: true});
-		} catch (e: any) {
-		}
+		// 使用MockStorage不需要清理文件系统
 	});
 
 	it('should support batch operations', async () => {

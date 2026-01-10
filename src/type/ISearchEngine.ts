@@ -45,7 +45,7 @@ export interface ISearchEngine {
 
 	addDocuments<T extends IDocument = IDocument>(docs: T[]): Promise<void>;
 
-	search<T extends IDocumentBase = IDocumentBase>(query: T | string, limit?: number): Promise<IResult[]>;
+	search<T extends IDocumentBase | string = any>(query: string, limit?: number): Promise<IResult[]>;
 
 	removeDocument(id: number): Promise<void>;
 

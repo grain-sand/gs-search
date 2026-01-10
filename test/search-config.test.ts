@@ -2,17 +2,18 @@
 
 import { afterAll, describe, expect, it } from 'vitest';
 import { SearchEngine } from '../src';
-import { getTestBaseDir, cleanupTestDirs } from './common/utils';
+import { MockStorage } from './common/storage';
 
 describe('Search Configuration', () => {
-	// 清理测试目录
+	// 使用MockStorage不需要清理测试目录
 	afterAll(async () => {
-		await cleanupTestDirs(['search']);
+		// 清理工作由MockStorage自动处理
 	});
 
 	it('should respect search result limit parameter', async () => {
+		const mockStorage = new MockStorage();
 		const engine = new SearchEngine({
-			baseDir: getTestBaseDir('search'),
+			storage: mockStorage,
 			wordSegmentTokenThreshold: 10
 		});
 		await engine.clearAll();

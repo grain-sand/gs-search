@@ -2,13 +2,16 @@
 
 import { describe, it, expect } from 'vitest';
 import { SearchEngine } from '../src';
-import { getTestBaseDir } from './common/utils';
+import { MockStorage } from './common/storage';
 
 describe('Config Validation', () => {
+    // 创建一个简单的MockStorage实例用于配置验证
+    const createMockStorage = () => new MockStorage();
+
     it('should throw error when minWordTokenSave >= wordSegmentTokenThreshold', () => {
         expect(() => {
             new SearchEngine({
-                baseDir: getTestBaseDir('config-validation'),
+                storage: createMockStorage(),
                 minWordTokenSave: 10,
                 wordSegmentTokenThreshold: 5
             });
@@ -18,7 +21,7 @@ describe('Config Validation', () => {
     it('should throw error when minCharTokenSave >= charSegmentTokenThreshold', () => {
         expect(() => {
             new SearchEngine({
-                baseDir: getTestBaseDir('config-validation'),
+                storage: createMockStorage(),
                 minCharTokenSave: 20,
                 charSegmentTokenThreshold: 10
             });
@@ -28,7 +31,7 @@ describe('Config Validation', () => {
     it('should not throw error when minWordTokenSave < wordSegmentTokenThreshold', () => {
         expect(() => {
             new SearchEngine({
-                baseDir: getTestBaseDir('config-validation'),
+                storage: createMockStorage(),
                 minWordTokenSave: 5,
                 wordSegmentTokenThreshold: 10
             });
@@ -38,7 +41,7 @@ describe('Config Validation', () => {
     it('should not throw error when minCharTokenSave < charSegmentTokenThreshold', () => {
         expect(() => {
             new SearchEngine({
-                baseDir: getTestBaseDir('config-validation'),
+                storage: createMockStorage(),
                 minCharTokenSave: 10,
                 charSegmentTokenThreshold: 20
             });
