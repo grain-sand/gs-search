@@ -134,7 +134,7 @@ const engine = new SearchEngine({
 
 ### SearchEngine
 
-- `constructor(options: ISearchEngineConfig)`: 新しいコアエンジンインスタンスを作成
+- `constructor(options: ISearchEngineOption)`: 新しいコアエンジンインスタンスを作成
 - `init(): Promise<void>`: エンジンを初期化
 - `addDocument(doc: IDocument): Promise<void>`: 単一ドキュメントを追加
 - `addDocuments(docs: IDocument[]): Promise<void>`: 複数ドキュメントを追加

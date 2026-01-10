@@ -116,7 +116,7 @@ const customTokenizer = (text: string): string[] => {
 
 // Create engine with custom tokenizers
 const engine = new SearchEngine({
-  baseDir: 'search-data',
+  storage: new BrowserStorage('search-data'),
   indexingTokenizer: customTokenizer,
   searchTokenizer: customTokenizer
 });
@@ -127,7 +127,7 @@ const engine = new SearchEngine({
 ### SimpleSearch
 
 **Static Methods (No instance creation required):**
-- `configure(config: Partial<ISearchEngineConfig>): void`: Configure the search engine
+- `configure(config: Partial<ISearchEngineOption>): void`: Configure the search engine
 - `addDocument(doc: IDocument): Promise<void>`: Add a single document
 - `addDocuments(docs: IDocument[]): Promise<void>`: Add multiple documents
 - `addDocumentIfMissing(doc: IDocument): Promise<void>`: Add a single document if it doesn't exist
@@ -141,7 +141,7 @@ const engine = new SearchEngine({
 
 ### SearchEngine
 
-- `constructor(options: ISearchEngineConfig)`: Create a new core engine instance
+- `constructor(options: ISearchEngineOption)`: Create a new core engine instance
 - `init(): Promise<void>`: Initialize the engine
 - `addDocument(doc: IDocument): Promise<void>`: Add a single document
 - `addDocuments(docs: IDocument[]): Promise<void>`: Add multiple documents

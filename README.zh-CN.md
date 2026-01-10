@@ -225,7 +225,7 @@ SimpleSearch.configure({
 ### SimpleSearch
 
 **静态方法（无需实例创建）：**
-- `configure(config: Partial<ISearchEngineConfig>): void`: 配置搜索引擎
+- `configure(config: Partial<ISearchEngineOption>): void`: 配置搜索引擎
 - `addDocument(doc: IDocument): Promise<void>`: 添加单个文档
 - `addDocuments(docs: IDocument[]): Promise<void>`: 添加多个文档
 - `addDocumentIfMissing(doc: IDocument): Promise<void>`: 如果文档不存在则添加单个文档
@@ -239,7 +239,7 @@ SimpleSearch.configure({
 
 ### SearchEngine
 
-- `constructor(options: ISearchEngineConfig)`: 创建一个新的核心引擎实例
+- `constructor(options: ISearchEngineOption)`: 创建一个新的核心引擎实例
 - `init(): Promise<void>`: 初始化引擎
 - `addDocument(doc: IDocument): Promise<void>`: 添加单个文档
 - `addDocuments(docs: IDocument[]): Promise<void>`: 添加多个文档

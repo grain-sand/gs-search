@@ -134,7 +134,7 @@ const engine = new SearchEngine({
 
 ### SearchEngine
 
-- `constructor(options: ISearchEngineConfig)`: 새로운 코어 엔진 인스턴스 생성
+- `constructor(options: ISearchEngineOption)`: 새로운 코어 엔진 인스턴스 생성
 - `init(): Promise<void>`: 엔진 초기화
 - `addDocument(doc: IDocument): Promise<void>`: 단일 문서 추가
 - `addDocuments(docs: IDocument[]): Promise<void>`: 다중 문서 추가
