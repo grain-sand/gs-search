@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
 	"test": "vitest run --browser.enabled=false",
+	"test:reload": "vitest run test/reload.test.ts --browser.enabled=false",
 	"test:browser": "vitest run --browser.enabled=true",
+	"test:browser,reload": "vitest test/reload.test.ts",
 	"build": "rollup -c --compact",
 	"build-copy": "rollup -c --environment COPY:true",
 	"dev": "tsx src/index.ts"
