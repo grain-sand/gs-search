@@ -1,8 +1,6 @@
 import dts from 'rollup-plugin-dts'
 import esbuild from 'rollup-plugin-esbuild'
-import typescript from 'rollup-plugin-typescript2'
 import resolve from '@rollup/plugin-node-resolve';
-import terser from '@rollup/plugin-terser';
 import copy from 'rollup-plugin-copy'
 
 const regexReplace = (patterns) => ({
@@ -45,12 +43,10 @@ const replace = regexReplace([
 
 const defaultPlugins = [
 	resolve(),
-	typescript(tsConfig),
 	esbuild({
 		target: 'es2022', // 设置为 ES2022 以确保使用 const/let
 		minifySyntax: true, // 压缩时保留现代语法
 	}),
-	terser(),
 	replace
 ];
 
