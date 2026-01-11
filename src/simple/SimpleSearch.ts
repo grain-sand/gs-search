@@ -52,23 +52,23 @@ export class SimpleSearch {
 		return this.#getInstance().endBatch();
 	}
 
-	static async addDocument<T extends IDocument = IDocument>(doc: T) {
+	static async addDocument(doc: IDocument) {
 		return this.#getInstance().addDocument(doc);
 	}
 
-	static async addDocumentIfMissing<T extends IDocument = IDocument>(doc: T) {
+	static async addDocumentIfMissing(doc: IDocument) {
 		return this.#getInstance().addDocumentIfMissing(doc);
 	}
 
-	static async addDocuments<T extends IDocument = IDocument>(docs: T[]) {
+	static async addDocuments(docs: IDocument[]) {
 		return this.#getInstance().addDocuments(docs);
 	}
 
-	static async addDocumentsIfMissing<T extends IDocument = IDocument>(docs: T[]) {
+	static async addDocumentsIfMissing(docs: IDocument[]) {
 		return this.#getInstance().addDocumentsIfMissing(docs);
 	}
 
-	static async search<T extends IDocumentBase = any>(query: T | string, limit?: number) {
+	static async search(query: IDocumentBase | string, limit?: number) {
 		return this.#getInstance().search(query, limit);
 	}
 

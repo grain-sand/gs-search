@@ -26,23 +26,23 @@ export interface ISearchEngine {
 	 */
 	endBatch(): Promise<void>;
 
-	addDocument<T extends IDocument = IDocument>(doc: T): Promise<void>;
+	addDocument(doc: IDocument): Promise<void>;
 
 	/**
 	 * 添加单个文档，如果文档ID已存在则跳过
 	 * 用于在批量添加中途出错后的恢复添加行为，也可直接用于单个文档添加
 	 */
-	addDocumentIfMissing<T extends IDocument = IDocument>(doc: T): Promise<void>;
+	addDocumentIfMissing(doc: IDocument): Promise<void>;
 
 	/**
 	 * 添加多个文档，跳过已存在的文档ID
 	 * 用于在批量添加中途出错后的恢复添加行为，也可直接用于批量添加
 	 */
-	addDocumentsIfMissing<T extends IDocument = IDocument>(docs: T[]): Promise<void>;
+	addDocumentsIfMissing(docs: IDocument[]): Promise<void>;
 
-	addDocuments<T extends IDocument = IDocument>(docs: T[]): Promise<void>;
+	addDocuments(docs: IDocument[]): Promise<void>;
 
-	search<T extends IDocumentBase | string = any>(query: string, limit?: number): Promise<IResult[]>;
+	search(query: IDocumentBase|string, limit?: number): Promise<IResult[]>;
 
 	removeDocument(id: number): Promise<void>;
 

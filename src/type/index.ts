@@ -6,5 +6,3 @@ export * from './ITokenizedDoc';
 export * from './ISearchEngineOption';
 export * from './IStorage';
 export * from './ISearchEngine';
-
-export const _ = '';

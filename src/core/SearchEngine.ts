@@ -87,7 +87,7 @@ export class SearchEngine implements ISearchEngine {
 		await this.#meta.save();
 	}
 
-	async addDocument<T extends IDocument = IDocument>(doc: T): Promise<void> {
+	async addDocument(doc: IDocument): Promise<void> {
 		return this.addDocuments([doc]);
 	}
 
@@ -95,7 +95,7 @@ export class SearchEngine implements ISearchEngine {
 	 * 添加单个文档，如果文档ID已存在则跳过
 	 * 用于在批量添加中途出错后的恢复添加行为，也可直接用于单个文档添加
 	 */
-	async addDocumentIfMissing<T extends IDocument = IDocument>(doc: T): Promise<void> {
+	async addDocumentIfMissing(doc: IDocument): Promise<void> {
 		return this.addDocumentsIfMissing([doc]);
 	}
 
@@ -103,14 +103,14 @@ export class SearchEngine implements ISearchEngine {
 	 * 添加多个文档，跳过已存在的文档ID
 	 * 用于在批量添加中途出错后的恢复添加行为，也可直接用于批量添加
 	 */
-	async addDocumentsIfMissing<T extends IDocument = IDocument>(docs: T[]): Promise<void> {
+	async addDocumentsIfMissing(docs: IDocument[]): Promise<void> {
 		if (!this.#initialized) await this.#init();
 		if (docs.length === 0) return;
 
 		const deletedIds = this.#meta.getDeletedIds();
 		const batchWordDocs: ITokenizedDoc[] = [];
 		const batchCharDocs: ITokenizedDoc[] = [];
-		const newDocs: T[] = [];
+		const newDocs: IDocument[] = [];
 
 		// 1. 分词与分类，跳过已存在或已删除的文档
 		for (const doc of docs) {
@@ -174,7 +174,7 @@ export class SearchEngine implements ISearchEngine {
 		}
 	}
 
-	async addDocuments<T extends IDocument = IDocument>(docs: T[]): Promise<void> {
+	async addDocuments(docs: IDocument[]): Promise<void> {
 		if (!this.#initialized) await this.#init();
 		if (docs.length === 0) return;
 
@@ -240,7 +240,7 @@ export class SearchEngine implements ISearchEngine {
 		}
 	}
 
-	async search<T extends IDocumentBase | string = any>(query: T, limit?: number): Promise<IResult[]> {
+	async search(query: IDocumentBase | string, limit?: number): Promise<IResult[]> {
 		if (!this.#initialized) await this.#init();
 
 		// Convert string query to IDocumentBase
