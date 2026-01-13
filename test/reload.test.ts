@@ -1,4 +1,4 @@
-// noinspection ES6UnusedImports
+// noinspection ES6UnusedImports,TypeScriptUnresolvedReference
 // noinspection JSUnusedLocalSymbols
 
 import {describe, it, expect} from "vitest";
@@ -28,15 +28,15 @@ describe('reload.test', () => {
 			{id: 2, text: '世界还是美好的'},
 			{id: 3, text: '可是'},
 		]
-		
+
 		// 添加数据
 		const engine1 = createEngine()
 		await engine1.addDocumentsIfMissing(data)
 		await engine1.endBatch();
-		
+
 		// 重新加载并搜索
 		const engine2 = createEngine()
-		const results = await engine2.search<any>('可')
+		const results = await engine2.search('可')
 		console.log('Search results:', results)
 		expect(results.length).toBeGreaterThan(0)
 		expect(results.some(r => r.id === 3)).toBe(true)

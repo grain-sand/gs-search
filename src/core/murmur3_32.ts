@@ -58,6 +58,3 @@ export function murmur3_32(str: string, h: number = 0x12345678): number {
 
     return h >>> 0;
 }
-
-// 导出murmur3_32作为主要哈希函数，移除重复的便捷函数
-export { murmur3_32 as hash };
