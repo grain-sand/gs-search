@@ -33,7 +33,7 @@ export class SearchEngine implements ISearchEngine {
 	#segments: Map<string, IIndexSegment>;
 	#initialized: boolean = false;
 	#config: ISearchEngineOption;
-	#isHash64Bit: boolean = false;
+	#isHash64Bit: boolean = true;
 	#hashAlgorithm32?: IHashAlgorithm32;
 	#hashAlgorithm64?: IHashAlgorithm64;
 
@@ -91,9 +91,9 @@ export class SearchEngine implements ISearchEngine {
 				this.#hashAlgorithm32 = hashConfig as IHashAlgorithm32;
 			}
 		} else {
-			// 默认使用32位哈希
-			this.#isHash64Bit = false;
-			this.#hashAlgorithm32 = new Murmur3_32();
+			// 默认使用64位哈希
+			this.#isHash64Bit = true;
+			this.#hashAlgorithm64 = new Murmur3_64();
 		}
 	}
 
