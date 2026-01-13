@@ -1,20 +1,23 @@
+/**
+ * 64位哈希索引段类
+ */
 import {IHashAlgorithm32, IHashAlgorithm64, IStorage, ITokenizedDoc, IIndexSegment} from '../type';
-import {Murmur3_32} from './hash/Murmur3';
+import {Murmur3_64} from './hash/Murmur3';
 
-export class IndexSegment implements IIndexSegment {
+export class IndexSegment64 implements IIndexSegment {
 	#filename: string;
 	#storage: IStorage;
 	#buffer: ArrayBuffer | null = null;
 	#view: DataView | null = null;
-	#hashAlgorithm: IHashAlgorithm32;
+	#hashAlgorithm: IHashAlgorithm64;
 
 	/**
 	 * 构造函数
 	 * @param filename 文件名
 	 * @param storage 存储接口
-	 * @param hashAlgorithm 哈希算法实例，默认为Murmur3_32
+	 * @param hashAlgorithm 哈希算法实例，默认为Murmur3_64
 	 */
-	constructor(filename: string, storage: IStorage, hashAlgorithm: IHashAlgorithm32 = new Murmur3_32()) {
+	constructor(filename: string, storage: IStorage, hashAlgorithm: IHashAlgorithm64 = new Murmur3_64()) {
 		this.#filename = filename;
 		this.#storage = storage;
 		this.#hashAlgorithm = hashAlgorithm;
@@ -23,9 +26,9 @@ export class IndexSegment implements IIndexSegment {
 	/**
 	 * 使用当前哈希算法计算字符串哈希值
 	 * @param str 要哈希的字符串
-	 * @returns 32位无符号哈希值
+	 * @returns 64位无符号哈希值
 	 */
-	hash(str: string): number {
+	hash(str: string): bigint {
 		return this.#hashAlgorithm.hash(str);
 	}
 
@@ -34,9 +37,8 @@ export class IndexSegment implements IIndexSegment {
 	 * @param hashAlgorithm 新的哈希算法实例
 	 */
 	setHashAlgorithm(hashAlgorithm: IHashAlgorithm32 | IHashAlgorithm64): void {
-		this.#hashAlgorithm = hashAlgorithm as IHashAlgorithm32;
+		this.#hashAlgorithm = hashAlgorithm as IHashAlgorithm64;
 	}
-
 
 	async loadIndex(): Promise<boolean> {
 		if (this.#buffer) return true;
@@ -49,7 +51,7 @@ export class IndexSegment implements IIndexSegment {
 	}
 
 	async buildAndSave(docs: ITokenizedDoc[]): Promise<void> {
-		const tokenMap = new Map<string, { hash: number; postings: number[] }>();
+		const tokenMap = new Map<string, { hash: bigint; postings: number[] }>();
 
 		// 去重并构建 postings
 		for (const doc of docs) {
@@ -71,7 +73,7 @@ export class IndexSegment implements IIndexSegment {
 		// 按 hash 排序，hash 相同再按 token 排序
 		const entries = Array.from(tokenMap.entries());
 		entries.sort(([a, ah], [b, bh]) => {
-			if (ah.hash !== bh.hash) return ah.hash - bh.hash;
+			if (ah.hash !== bh.hash) return ah.hash > bh.hash ? 1 : -1;
 			return a.localeCompare(b);
 		});
 
@@ -88,14 +90,14 @@ export class IndexSegment implements IIndexSegment {
 		}
 
 		/*
-		  结构：
-		  Header: 12
-		  Dict: entries.length * 20
-		  Postings: totalPostings * 4
-		  Tokens: totalTokensSize
-		*/
-		const headerSize = 12;
-		const dictSize = entries.length * 20;
+		 结构：
+		 Header: 16
+		 Dict: entries.length * 28
+		 Postings: totalPostings * 4
+		 Tokens: totalTokensSize
+		 */
+		const headerSize = 16;
+		const dictSize = entries.length * 28;
 		const postingsSize = totalPostings * 4;
 		const tokensOffset = headerSize + dictSize + postingsSize;
 		const totalSize = tokensOffset + totalTokensSize;
@@ -107,6 +109,7 @@ export class IndexSegment implements IIndexSegment {
 		view.setUint32(0, 0x494E4458);          // 'INDX'
 		view.setUint32(4, entries.length, true);
 		view.setUint32(8, tokensOffset, true);
+		view.setUint32(12, 64, true);           // 64位哈希标志
 
 		let currentDictOffset = headerSize;
 		let currentPostingsOffset = headerSize + dictSize;
@@ -114,13 +117,13 @@ export class IndexSegment implements IIndexSegment {
 
 		for (const [token, {hash, postings}] of entries) {
 			// Dict entry
-			view.setUint32(currentDictOffset, hash, true);
+			view.setBigUint64(currentDictOffset, hash, true);
 			const tokenBytes = encoder.encode(token);
-			view.setUint32(currentDictOffset + 4, tokenBytes.length, true); // UTF-8字节长度
-			view.setUint32(currentDictOffset + 8, currentTokenOffset, true);
-			view.setUint32(currentDictOffset + 12, currentPostingsOffset, true);
-			view.setUint32(currentDictOffset + 16, postings.length, true);
-			currentDictOffset += 20;
+			view.setUint32(currentDictOffset + 8, tokenBytes.length, true); // UTF-8字节长度
+			view.setUint32(currentDictOffset + 12, currentTokenOffset, true);
+			view.setUint32(currentDictOffset + 16, currentPostingsOffset, true);
+			view.setUint32(currentDictOffset + 20, postings.length, true);
+			currentDictOffset += 28;
 
 			// Postings
 			for (let i = 0; i < postings.length; i++) {
@@ -148,15 +151,15 @@ export class IndexSegment implements IIndexSegment {
 
 		let left = 0;
 		let right = count - 1;
-		const headerSize = 12;
-		const entrySize = 20;
+		const headerSize = 16;
+		const entrySize = 28;
 		const decoder = new TextDecoder();
 
 		// 二分查找哈希值
 		while (left <= right) {
 			const mid = (left + right) >>> 1;
 			const entryPos = headerSize + mid * entrySize;
-			const entryHash = this.#view.getUint32(entryPos, true);
+			const entryHash = this.#view.getBigUint64(entryPos, true);
 
 			if (entryHash < h) {
 				left = mid + 1;
@@ -164,13 +167,13 @@ export class IndexSegment implements IIndexSegment {
 				right = mid - 1;
 			} else {
 				// 检查是否存在哈希冲突
-				const hasConflict = (mid > 0 && this.#view.getUint32(headerSize + (mid - 1) * entrySize, true) === h) ||
-					(mid < count - 1 && this.#view.getUint32(headerSize + (mid + 1) * entrySize, true) === h);
+				const hasConflict = (mid > 0 && this.#view.getBigUint64(headerSize + (mid - 1) * entrySize, true) === h) ||
+					(mid < count - 1 && this.#view.getBigUint64(headerSize + (mid + 1) * entrySize, true) === h);
 
 				if (!hasConflict) {
 					// 无冲突，直接返回当前条目的postings
-					const postingsOffset = this.#view.getUint32(headerSize + mid * entrySize + 12, true);
-					const postingsLen = this.#view.getUint32(headerSize + mid * entrySize + 16, true);
+					const postingsOffset = this.#view.getUint32(headerSize + mid * entrySize + 16, true);
+					const postingsLen = this.#view.getUint32(headerSize + mid * entrySize + 20, true);
 					const result: number[] = [];
 					for (let j = 0; j < postingsLen; j++) {
 						result.push(this.#view.getUint32(postingsOffset + j * 4, true));
@@ -184,7 +187,7 @@ export class IndexSegment implements IIndexSegment {
 				let firstMatch = mid;
 				while (firstMatch > 0) {
 					const prevPos = headerSize + (firstMatch - 1) * entrySize;
-					if (this.#view.getUint32(prevPos, true) === h) {
+					if (this.#view.getBigUint64(prevPos, true) === h) {
 						firstMatch--;
 					} else {
 						break;
@@ -194,19 +197,19 @@ export class IndexSegment implements IIndexSegment {
 				// 搜索所有匹配的哈希值，检查token是否完全匹配
 				for (let i = firstMatch; i < count; i++) {
 					const checkPos = headerSize + i * entrySize;
-					const checkHash = this.#view.getUint32(checkPos, true);
+					const checkHash = this.#view.getBigUint64(checkPos, true);
 					if (checkHash !== h) break;
 
 					// 读取token并比较
-					const tokenLen = this.#view.getUint32(checkPos + 4, true);
-					const tokenOffset = this.#view.getUint32(checkPos + 8, true);
+					const tokenLen = this.#view.getUint32(checkPos + 8, true);
+					const tokenOffset = this.#view.getUint32(checkPos + 12, true);
 					const tokenBuffer = new Uint8Array(this.#buffer, tokenOffset, tokenLen);
 					const storedToken = decoder.decode(tokenBuffer);
 
 					if (storedToken === term) {
 						// 找到完全匹配的token，返回postings
-						const postingsOffset = this.#view.getUint32(checkPos + 12, true);
-						const postingsLen = this.#view.getUint32(checkPos + 16, true);
+						const postingsOffset = this.#view.getUint32(checkPos + 16, true);
+						const postingsLen = this.#view.getUint32(checkPos + 20, true);
 						const result: number[] = [];
 						for (let j = 0; j < postingsLen; j++) {
 							result.push(this.#view.getUint32(postingsOffset + j * 4, true));

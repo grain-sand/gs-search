@@ -1,6 +1,7 @@
 import {MetaManager} from './MetaManager';
 import {IntermediateCache} from './IntermediateCache';
 import {IndexSegment} from './IndexSegment';
+import {IndexSegment64} from './IndexSegment64';
 import {
 	IDocument,
 	IDocumentBase,
@@ -10,8 +11,12 @@ import {
 	ISearchEngineOption,
 	ISearchEngineStatus,
 	IStorage,
-	ITokenizedDoc
+	ITokenizedDoc,
+	IHashAlgorithm32,
+	IHashAlgorithm64,
+	IIndexSegment
 } from '../type';
+import {Murmur3_32, Murmur3_64} from './hash/Murmur3';
 import {defaultTokenize} from "./defaultTokenize";
 
 const WORD_CACHE_FILE = 'word_cache.bin';
@@ -25,9 +30,12 @@ export class SearchEngine implements ISearchEngine {
 	#storage: IStorage;
 	#meta: MetaManager;
 	#cache: IntermediateCache;
-	#segments: Map<string, IndexSegment>;
+	#segments: Map<string, IIndexSegment>;
 	#initialized: boolean = false;
 	#config: ISearchEngineOption;
+	#isHash64Bit: boolean = false;
+	#hashAlgorithm32?: IHashAlgorithm32;
+	#hashAlgorithm64?: IHashAlgorithm64;
 
 	// 批处理状态
 	#inBatch: boolean = false;
@@ -43,6 +51,9 @@ export class SearchEngine implements ISearchEngine {
 			...config
 		};
 
+		// 处理哈希算法配置
+		this.#processHashAlgorithmConfig();
+
 		// 验证配置关系
 		if ((this.#config.minWordTokenSave || 0) >= (this.#config.wordSegmentTokenThreshold || 100000)) {
 			throw new Error("minWordTokenSave must be less than wordSegmentTokenThreshold");
@@ -57,6 +68,33 @@ export class SearchEngine implements ISearchEngine {
 		this.#meta = new MetaManager(this.#storage);
 		this.#cache = new IntermediateCache(this.#storage);
 		this.#segments = new Map();
+	}
+
+	/**
+	 * 处理哈希算法配置
+	 */
+	#processHashAlgorithmConfig(): void {
+		const hashConfig = this.#config.hashAlgorithm;
+		
+		if (hashConfig === 64) {
+			this.#isHash64Bit = true;
+			this.#hashAlgorithm64 = new Murmur3_64();
+		} else if (hashConfig === 32) {
+			this.#isHash64Bit = false;
+			this.#hashAlgorithm32 = new Murmur3_32();
+		} else if (hashConfig && typeof hashConfig.hash === 'function') {
+			if (typeof hashConfig.hash('test') === 'bigint') {
+				this.#isHash64Bit = true;
+				this.#hashAlgorithm64 = hashConfig as IHashAlgorithm64;
+			} else {
+				this.#isHash64Bit = false;
+				this.#hashAlgorithm32 = hashConfig as IHashAlgorithm32;
+			}
+		} else {
+			// 默认使用32位哈希
+			this.#isHash64Bit = false;
+			this.#hashAlgorithm32 = new Murmur3_32();
+		}
 	}
 
 	/**
@@ -253,7 +291,7 @@ export class SearchEngine implements ISearchEngine {
 		const docMatches = new Map<number, { score: number, tokens: Set<string> }>();
 
 		// 预加载所有需要的索引段
-		const segmentsToLoad = new Map<string, IndexSegment>();
+		const segmentsToLoad = new Map<string, IIndexSegment>();
 
 		// 收集所有需要的索引段
 		const collectSegments = (type: IndexType) => {
@@ -261,7 +299,11 @@ export class SearchEngine implements ISearchEngine {
 			for (const meta of segmentsMeta) {
 				const filename = meta.filename;
 				if (!this.#segments.has(filename) && !segmentsToLoad.has(filename)) {
-					segmentsToLoad.set(filename, new IndexSegment(filename, this.#storage));
+					if (this.#isHash64Bit) {
+						segmentsToLoad.set(filename, new IndexSegment64(filename, this.#storage, this.#hashAlgorithm64!));
+					} else {
+						segmentsToLoad.set(filename, new IndexSegment(filename, this.#storage, this.#hashAlgorithm32!));
+					}
 				}
 			}
 		};
@@ -378,7 +420,11 @@ export class SearchEngine implements ISearchEngine {
 		// 预加载所有相关的索引段并加载数据
 		for (const seg of allSegments) {
 			if (!this.#segments.has(seg.filename)) {
-				this.#segments.set(seg.filename, new IndexSegment(seg.filename, this.#storage));
+				if (this.#isHash64Bit) {
+					this.#segments.set(seg.filename, new IndexSegment64(seg.filename, this.#storage, this.#hashAlgorithm64!));
+				} else {
+					this.#segments.set(seg.filename, new IndexSegment(seg.filename, this.#storage, this.#hashAlgorithm32!));
+				}
 			}
 			// 确保索引段已加载数据
 			await this.#segments.get(seg.filename)!.loadIndex();
@@ -464,7 +510,11 @@ export class SearchEngine implements ISearchEngine {
 
 		let segment = this.#segments.get(targetSegmentName);
 		if (!segment) {
-			segment = new IndexSegment(targetSegmentName, this.#storage);
+			if (this.#isHash64Bit) {
+				segment = new IndexSegment64(targetSegmentName, this.#storage, this.#hashAlgorithm64!);
+			} else {
+				segment = new IndexSegment(targetSegmentName, this.#storage, this.#hashAlgorithm32!);
+			}
 			this.#segments.set(targetSegmentName, segment);
 		}
 

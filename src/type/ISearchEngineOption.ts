@@ -8,6 +8,7 @@ export type IndexType = 'word' | 'char';
  */
 import {IDocument, IDocumentBase} from './IDocument';
 import {IStorage} from './IStorage';
+import {IHashAlgorithm32, IHashAlgorithm64} from './IHashAlgorithm';
 
 export type IndexingTokenizer = <T extends IDocument = IDocument>(doc: T) => string[];
 export type SearchTokenizer = <T extends IDocumentBase = IDocumentBase>(doc: T) => string[];
@@ -45,6 +46,16 @@ export interface ISearchEngineOption {
 	 * - 影响: 直接决定搜索匹配的范围和结果的相关性
 	 */
 	searchTokenizer?: SearchTokenizer;
+
+	/**
+	 * 哈希算法配置 (可选)
+	 * - 32: 使用默认32位哈希算法
+	 * - 64: 使用默认64位哈希算法
+	 * - IHashAlgorithm32: 使用自定义32位哈希算法
+	 * - IHashAlgorithm64: 使用自定义64位哈希算法
+	 * - undefined: 默认使用32位哈希算法
+	 */
+	hashAlgorithm?: 32 | 64 | IHashAlgorithm32 | IHashAlgorithm64;
 
 	/**
 	 * 词索引分段阈值 (Token数) - 分段算法配置
