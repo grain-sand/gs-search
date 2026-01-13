@@ -1,25 +1,42 @@
-import {ITokenizedDoc, IStorage} from '../type';
-import {murmur3_32} from "./murmur3_32";
+import {IHashAlgorithm32, IStorage, ITokenizedDoc} from '../type';
+import {Murmur3_32} from './hash/Murmur3';
 
 export class IndexSegment {
 	#filename: string;
 	#storage: IStorage;
 	#buffer: ArrayBuffer | null = null;
 	#view: DataView | null = null;
+	#hashAlgorithm: IHashAlgorithm32;
 
-	constructor(filename: string, storage: IStorage) {
+	/**
+	 * 构造函数
+	 * @param filename 文件名
+	 * @param storage 存储接口
+	 * @param hashAlgorithm 哈希算法实例，默认为Murmur3_32
+	 */
+	constructor(filename: string, storage: IStorage, hashAlgorithm: IHashAlgorithm32 = new Murmur3_32()) {
 		this.#filename = filename;
 		this.#storage = storage;
+		this.#hashAlgorithm = hashAlgorithm;
 	}
 
 	/**
-	 * 使用MurmurHash3计算字符串哈希值
+	 * 使用当前哈希算法计算字符串哈希值
 	 * @param str 要哈希的字符串
 	 * @returns 32位无符号哈希值
 	 */
-	static hash(str: string): number {
-		return murmur3_32(str);
+	hash(str: string): number {
+		return this.#hashAlgorithm.hash(str);
 	}
+
+	/**
+	 * 设置哈希算法
+	 * @param hashAlgorithm 新的哈希算法实例
+	 */
+	setHashAlgorithm(hashAlgorithm: IHashAlgorithm32): void {
+		this.#hashAlgorithm = hashAlgorithm;
+	}
+
 
 	async loadIndex(): Promise<boolean> {
 		if (this.#buffer) return true;
@@ -42,7 +59,7 @@ export class IndexSegment {
 					uniqueTokens.set(token, true);
 					if (!tokenMap.has(token)) {
 						tokenMap.set(token, {
-							hash: IndexSegment.hash(token),
+							hash: this.hash(token),
 							postings: []
 						});
 					}
@@ -126,7 +143,7 @@ export class IndexSegment {
 
 	search(term: string): number[] {
 		if (!this.#view || !this.#buffer) return [];
-		const h = IndexSegment.hash(term);
+		const h = this.hash(term);
 		const count = this.#view.getUint32(4, true);
 
 		let left = 0;

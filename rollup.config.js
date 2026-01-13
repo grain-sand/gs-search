@@ -10,13 +10,15 @@ const regexReplace = (patterns) => ({
 			const chunk = bundle[file];
 			if (chunk.type === 'asset' || chunk.type === 'chunk') {
 				let code = chunk.code || chunk.source;
-				for (const {find, replacement} of patterns) {
-					code = code.replace(find, replacement);
-				}
-				if (chunk.code) {
-					chunk.code = code;
-				} else {
-					chunk.source = code;
+				if (code !== undefined) {
+					for (const {find, replacement} of patterns) {
+						code = code.replace(find, replacement);
+					}
+					if (chunk.code) {
+						chunk.code = code;
+					} else {
+						chunk.source = code;
+					}
 				}
 			}
 		}
