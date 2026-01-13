@@ -1,2 +1,2 @@
 export * from './SearchEngine';
-export * from './Hash';
+export * from './murmur3_32';

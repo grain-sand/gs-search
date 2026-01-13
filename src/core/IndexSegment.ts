@@ -1,5 +1,5 @@
 import { ITokenizedDoc, IStorage } from '../type';
-import { hash } from './Hash';
+import { hash } from './murmur3_32';
 
 export class IndexSegment {
     #filename: string;
